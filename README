@@ -1,0 +1,316 @@
+   
+JFunc: JUnit Functional Testing Extension
+
+What is JFunc?
+
+   JFunc is an extension to the [7]JUnit testing framework to make it
+   easier for use with functional tests. Functional testing (also called
+   integration testing) significantly differs from unit testing in a
+   number of respects. Part of this project is dedicated towards putting
+   together code to address these differences; the other part of this
+   project is putting together methodologies for functional testing.
+   
+What is functional testing?
+
+   Functional testing, or integration testing, is testing concerned with
+   the entire system, not just small pieces (or units) of code. For those
+   interesting in unit testing, [8]JUnit is currently the premiere unit
+   testing framework for Java software.
+   
+Who is this intended for?
+
+   This project is primarily intended for people developing functional
+   tests, however, I have seen many people doing unit testing ask for the
+   kind of functionality that JFunc provides.
+   
+Are you doing functional testing?
+
+   Sometimes it's difficult to ascertain what kind of testing you're
+   doing. If you're unsure, try asking yourself these questions:
+    1. Is the sequence that your tests run in important?
+    2. Do you need/want more output than "..F.E"?
+    3. Are you struggling with fixtures when what you really want is
+       variables?
+    4. Do you need to prepare your suites by hand? (i.e. can't rely on
+       your test suite to be dynamically generated.)
+       
+   If you answered yes to any of the preceding you may be doing some sort
+   of functional testing. Even if you're decidedly not doing functional
+   testing and you answered yes to some, you may want to use some of
+   JFunc's functionality in your own unit testing.
+   
+What features does JFunc provide?
+
+   The current features that JFunc has to offer are the following:
+     * Multiple failures ([9]examples)
+     * Easing the pains of Manual Suite Construction
+          + Concise, typesafe, suite construction using
+            proxies([10]examples)
+          + Use one test object for a series of tests, rather than the
+            one test instance per test ([11]examples)
+          + Test methods can accept arguments ([12]see manual example)
+     * Enhanced Test Runner
+          + Verbose assertions ([13]examples)
+          + Pass arguments to tests on the CLI ([14]examples)
+       
+Who supports this extension?
+
+   This framework was developed by Shane Celis and is supported by
+   [15]Terraspring, Inc. This framework has been used extensively in the
+   development and testing of Terraspring's product. We hope people gain
+   as much from the software we're releasing as we've received from other
+   Open Source software.
+   
+   All trademarks and copyrights on this page are properties of their
+   respective owners. Forum comments are owned by the poster. The rest is
+   copyright ©1999-2000 VA Linux Systems, Inc.
+
+   
+                              JFunc: Examples
+                                      
+Multiple Failures
+
+   One of the things which perturbed me regarding JUnit was the fact that
+   I couldn't allow a test to continue running once a failure had
+   occurred within that test. In JUnit all failures are "fatal" to the
+   test. In JFunc you can choose between failures being "fatal" or
+   "non-fatal". To illustrate this here's what the test code looks like:
+   
+public SimpleTest(String name) {
+    super(name);
+    setFatal(false); // use non-fatal asserts
+}
+public void testMultipleFailures() {
+    fail("failing once");
+    fail("failing twice");
+    fail("failing once again");
+}
+
+   Running JFunc's test runner presents the following results:
+   
+$ java -cp jfunc.jar:junit.jar junit.extensions.jfunc.textui.JFuncRunner \
+--color junit.extensions.jfunc.samples.SimpleTest testMultipleFailures
+.FFF
+Time: 0.022
+There were 3 failures:
+1) SimpleTest.testMultipleFailures() failing once
+2) SimpleTest.testMultipleFailures() failing twice
+3) SimpleTest.testMultipleFailures() failing once again
+
+FAILURES!!!
+Tests run: 1,  Failures: 3,  Errors: 0
+   
+   Do note that the familiar status line "Tests run: x, Failures: y,
+   Errors: z" will no longer retain the familiar property x >= y + z. And
+   yes those colors will present themselves on the terminal, if you use
+   the '--color' option or you place 'jfunc.color=true' in your JUnit
+   preferences file.
+     _________________________________________________________________
+   
+Manual Suite Construction
+
+   Most unit testing can rely on the test suite to be dynamically
+   generated, in functional testing this is almost never the case. I'll
+   first demonstrate the standard means of constructing a suite, both
+   typesafe and not typesafe, and then demonstrate how proxies can make
+   this easier and provide more features.
+   
+   These three pieces of code should illustrate the difference.
+   
+   Example 1. Old Style (not typesafe):
+   
+TestSuite suite = new TestSuite();
+// this may break at runtime in the event any of these methods change
+suite.addTest(new SuiteConstruction("testPassed"));
+suite.addTest(new SuiteConstruction("testFailed"));
+suite.addTest(new SuiteConstruction("testErrored"));
+// can't give arguments to a test using this method
+//suite.addTest(new SuiteConstruction("testWithArgs"));
+return suite;
+
+   Example 2. Old Style (typesafe):
+   
+TestSuite suite = new TestSuite();
+suite.addTest(new SuiteConstruction("passed") {
+        protected void runTest() { testPassed(); }
+     });
+suite.addTest(new SuiteConstruction("failed") {
+        protected void runTest() { testFailed(); }
+     });
+suite.addTest(new SuiteConstruction("errored") {
+        protected void runTest() { testErrored(); }
+     });
+suite.addTest(new SuiteConstruction("args") {
+        protected void runTest() { testWithArgs(new Object()); }
+     });
+return suite;
+
+   Example 3. New Style:
+   
+JFuncSuite suite = new JFuncSuite();
+SuiteConstruction test = new SuiteConstruction();
+test = (SuiteConstruction) suite.getTestProxy(test);
+test.testPassed();
+test.testFailed();
+test.testErrored();
+test.testWithArgs(new Object());
+return suite;
+
+   Examples 2 and 3 are effectively the same (example 1 is not, because
+   it can not provide arguments to the test). Example 3 is easier to read
+   in my opinion, and more concise. If you were to compare the example 1
+   against example 3, an advantage is more checks happen at compile time
+   (where example 1 could be easily broken by changes in the method
+   names, and you wouldn't know about it until it runtime). Also the new
+   style allows for one to optionally choose between one test instance
+   per test (default JUnit behavior) or one test instance for all tests
+   (meaning you can now use those class variables without having to make
+   them static). See [7]below for an example.
+   
+   All the examples can be found in the source code under
+   junit/extensions/jfunc/samples/SuiteConstruction.java
+     _________________________________________________________________
+   
+One Test Instance
+
+   In functional testing, you may find that a lot of information
+   necessary to run the test isn't available until the test is actually
+   running. Fixtures are not really applicable to this sort of testing.
+   What you really want in this case is member variables which the JFunc
+   suite allows for.
+   
+    private boolean sharing = false; // member variable
+
+    public void testSharing() {
+        assert("sharing should always should start out false", sharing == false
+);
+        sharing = true;
+    }
+
+   In JUnit this code will always fail because every test is a different
+   instance of that test, therefore you can't share member variables.
+   This is a good thing in unit testing, since you want your unit tests
+   to stand alone and not interfere with each other. In functionality
+   testing though, I don't think you can get away with this. More often
+   then not you end up with static member variables in an attempt to pass
+   variables between the classes.
+   
+
+$ java -cp jfunc.jar:junit.jar junit.extensions.jfunc.textui.JFuncRunner \
+ -v --color junit.extensions.jfunc.samples.SuiteConstruction sharing
+..F
+Time: 0.018
+There was 1 failure:
+1) SuiteConstruction.testSharing() sharing should always should start out false
+
+FAILURES!!!
+Tests run: 2,  Failures: 1,  Errors: 0
+     _________________________________________________________________
+   
+Enhanced Test Runner
+
+   JFunc's test runner has been enhanced in a few ways, that aren't
+   immediately noticeable when you first use it. This was intentional, as
+   I want JFunc to behave exactly like JUnit unless you opt-in to use
+   some of JFunc's features.
+   
+usage: jfuncrunner [--wait] [-v] [--color] testCaseName [args]
+  --version   display version
+  --wait      wait between tests
+  -v          be verbose (show verbose assertions)
+  --color     display ANSI colors
+
+   Verbose assertions are described [8]below. Arguments can be passed to
+   a test now also described [9]below.
+   
+   The color feature was added just to keep in sync with the JUnit
+   mantra, "keep the bar green to keep the code clean..."
+     _________________________________________________________________
+   
+Verbose Assertions
+
+   When using JUnit for functional testing there are often times where
+   you want more reporting than "..F.E". Sometimes you want your tool to
+   actually report not only on the failures, but also on the tests that
+   have passed. This is another area where functional testing and unit
+   testing have their differences. In unit testing it is mainly the
+   developer who is going to be using test runner and other associated
+   tools. In functional testing, however, sometimes the tests may be
+   employed by QA or other people who aren't intimately familiar with the
+   code, and terseness is something you want to avoid. Basically, you
+   want to be able to display what it is that you're testing. That's the
+   reasoning behind the verbose assertions anyhow.
+   
+   Here's a snippet of code from SimpleTest:
+   
+public void testVerboseAssertions() {
+    // first arg is a description of the comparison
+    // second arg is the expected value
+    // third arg is the actual value
+    vassert("good old numbers", 1, 1);
+    vassert("good old numbers", 3, 1);
+    vassert("good old strings", "hi", "hi");
+    vassert("good old strings", "hi", "bye");
+    // first arg is the passed message
+    // second arg is the failed message
+    // third arg is condition (true = passed, false = failed)
+    vassert("Found some similarities", "No similarities found", true);
+    vassert("Found some similarities", "No similarities found", false);
+}
+
+   Running JFunc's test runner presents the following results:
+   
+
+$ java -cp jfunc.jar:junit.jar junit.extensions.jfunc.textui.JFuncRunner \
+ -v --color junit.extensions.jfunc.samples.SimpleTest testVerboseAssertions
+SimpleTest.testVerboseAssertions():
+  [ PASSED good old numbers: EXPECTED(1) ACTUAL(1) ]
+  [ FAILED good old numbers: EXPECTED(3) ACTUAL(1) ]
+  [ PASSED good old strings: EXPECTED(hi) ACTUAL(hi) ]
+  [ FAILED good old strings: EXPECTED(hi) ACTUAL(bye) ]
+  [ PASSED Found some similarities ]
+  [ FAILED No similarities found ]
+
+Time: 0.044
+There were 3 failures:
+1) SimpleTest.testVerboseAssertions() good old numbers: EXPECTED(3) ACTUAL(1)
+2) SimpleTest.testVerboseAssertions() good old strings: EXPECTED(hi) ACTUAL(bye
+)
+3) SimpleTest.testVerboseAssertions() No similarities found
+
+FAILURES!!!
+Tests run: 1,  Failures: 3,  Errors: 0
+   
+   Notice that two options are given to the test runner. The '-v' option
+   displays verbose assertions, if it were left out you'd get ".FFF". And
+   there is also the color option which just makes the term easier to
+   read.
+     _________________________________________________________________
+   
+Pass Arguments to the Suite Constructor
+
+   JFunc's test runner allows for you to pass arguments to your suite
+   constructor. It allows you to specify the following suite constructor:
+   
+public static Test suite(String[] args) throws UsageException {
+    // body
+}
+
+   SimpleTest makes use of this functionality to run only one of it's
+   tests:
+   
+public static Test suite(String[] args) throws UsageException {
+    return new SimpleTest(args[0]);
+}
+
+   You may have noticed this in some of the preceding examples. However,
+   it is backwards compatible with the old suite constructor, which is
+   used if no arguments are given.
+   
+   If you're wondering how this could be useful, you probably don't need
+   this functionality.
+   
+   All trademarks and copyrights on this page are properties of their
+   respective owners. Forum comments are owned by the poster. The rest is
+   copyright 1999-2000 VA Linux Systems, Inc.
+
