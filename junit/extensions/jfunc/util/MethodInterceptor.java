@@ -104,9 +104,9 @@ package junit.extensions.jfunc.util;
 
  *@author     Juozas Baliuka <a href="mailto:baliuka@mwm.lt">
  *      baliuka@mwm.lt</a>
- *@version    $Id: MethodInterceptor.java,v 1.1 2002/06/27 00:54:52 semios Exp $
+ *@version    $Id: MethodInterceptor.java,v 1.2 2002/06/27 23:43:19 semios Exp $
  */
-public interface MethodInterceptor {
+public interface MethodInterceptor extends java.lang.reflect.InvocationHandler {
     
     /** Generated code calls this method first
      * @param obj this
@@ -134,7 +134,7 @@ public interface MethodInterceptor {
                                 Object args[]
                                 /*,Object retValFromBefore*/ )
                                              throws java.lang.Throwable;    
-    
+
     /** this method is invoked after execution
      * @param obj this
      * @param method Method

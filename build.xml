@@ -23,6 +23,7 @@
                 <javac 
                         srcdir="."
                         destdir="build"
+                        excludes="**/notworking/*"
                         debug="on">
                         <classpath>
                                 <pathelement location="lib/jcfe.jar" />

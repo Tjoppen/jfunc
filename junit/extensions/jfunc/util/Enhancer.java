@@ -59,52 +59,8 @@ import java.lang.reflect.*;
 
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
-import org.apache.bcel.generic.AASTORE;
-import org.apache.bcel.generic.ACONST_NULL;
-import org.apache.bcel.generic.LCONST;
-import org.apache.bcel.generic.FCONST;
-import org.apache.bcel.generic.DCONST;
-import org.apache.bcel.generic.ALOAD;
-import org.apache.bcel.generic.ANEWARRAY;
-import org.apache.bcel.generic.ARETURN;
-import org.apache.bcel.generic.ASTORE;
-import org.apache.bcel.generic.BIPUSH;
-import org.apache.bcel.generic.BasicType;
-import org.apache.bcel.generic.CHECKCAST;
-import org.apache.bcel.generic.ClassGen;
-import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.DLOAD;
-import org.apache.bcel.generic.DRETURN;
-import org.apache.bcel.generic.DUP;
-import org.apache.bcel.generic.FLOAD;
-import org.apache.bcel.generic.FRETURN;
-import org.apache.bcel.generic.FieldGen;
-import org.apache.bcel.generic.GETFIELD;
-import org.apache.bcel.generic.GOTO;
-import org.apache.bcel.generic.ICONST;
-import org.apache.bcel.generic.IFEQ;
-import org.apache.bcel.generic.ILOAD;
-import org.apache.bcel.generic.INVOKEINTERFACE;
-import org.apache.bcel.generic.INVOKESPECIAL;
-import org.apache.bcel.generic.INVOKESTATIC;
-import org.apache.bcel.generic.INVOKEVIRTUAL;
-import org.apache.bcel.generic.IRETURN;
-import org.apache.bcel.generic.ISTORE;
-import org.apache.bcel.generic.Instruction;
-import org.apache.bcel.generic.InstructionFactory;
-import org.apache.bcel.generic.InstructionHandle;
-import org.apache.bcel.generic.InstructionList;
-import org.apache.bcel.generic.LLOAD;
-import org.apache.bcel.generic.LRETURN;
-import org.apache.bcel.generic.MethodGen;
-import org.apache.bcel.generic.NEW;
-import org.apache.bcel.generic.ObjectType;
-import org.apache.bcel.generic.PUTFIELD;
-import org.apache.bcel.generic.RETURN;
-import org.apache.bcel.generic.IFNULL;
-import org.apache.bcel.generic.IFNONNULL;
-import org.apache.bcel.generic.Type;
-import org.apache.bcel.generic.ArrayType;
+import org.apache.bcel.generic.*;
+
 /**
  * this code returns Enhanced Vector to intercept  all methods for tracing
  *   <pre>
@@ -139,13 +95,14 @@ import org.apache.bcel.generic.ArrayType;
  * </pre>
  *@author     Juozas Baliuka <a href="mailto:baliuka@mwm.lt">
  *      baliuka@mwm.lt</a>
- *@version    $Id: Enhancer.java,v 1.1 2002/06/27 00:54:52 semios Exp $
+ *@version    $Id: Enhancer.java,v 1.2 2002/06/27 23:43:19 semios Exp $
  */
 public class Enhancer implements org.apache.bcel.Constants {
     
     
     
     static final String INTERCEPTOR_CLASS = MethodInterceptor.class.getName();
+    static final String INVOCATION_CLASS = InvocationHandler.class.getName();
     static final ObjectType BOOLEAN_OBJECT =
     new ObjectType(Boolean.class.getName());
     static final ObjectType INTEGER_OBJECT =
@@ -190,6 +147,15 @@ public class Enhancer implements org.apache.bcel.Constants {
         "afterReturn",
         "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;ZLjava/lang/Object;Ljava/lang/Throwable;)Ljava/lang/Object;");
     }
+
+    private static int addInvokeRef(ConstantPoolGen cp) {
+        return cp.addInterfaceMethodref(
+        INVOCATION_CLASS,// should this have been changed?
+        "invoke",
+        // Object proxy; method; Object[] args
+        "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;");
+    }
+
     private static int addInvokeSupperRef(ConstantPoolGen cp) {
         return cp.addInterfaceMethodref(
         INTERCEPTOR_CLASS,
@@ -205,7 +171,7 @@ public class Enhancer implements org.apache.bcel.Constants {
     }*/
     private static java.util.List costructionHandlers = new java.util.Vector();
     private static java.util.Map cache = new java.util.WeakHashMap();
-    /** Creates a new instance of Enchancer */
+    /** Creates a new instance of Enhancer */
     
     protected Enhancer() {}
     public static void setMethodInterceptor(Object enhanced, MethodInterceptor ih)
@@ -429,8 +395,10 @@ public class Enhancer implements org.apache.bcel.Constants {
         ConstantPoolGen cp = cg.getConstantPool(); // cg creates constant pool
         addHandlerField(cg);
         addConstructor(cg);
-        int after = addAfterRef(cp);
+        //int after = addAfterRef(cp);
+        int after = addInvokeRef(cp);
         int invokeSuper = addInvokeSupperRef(cp);
+        //int invokeSuper = addInvokeRef(cp);
         java.util.Set methodSet = new java.util.HashSet();
         
         for (int j = 0;  j <= (interfaces == null ? 0 : interfaces.length ); j++ ) {
@@ -460,6 +428,7 @@ public class Enhancer implements org.apache.bcel.Constants {
             methodTable.put(fieldName, method);
         }
         JavaClass jcl = cg.getJavaClass();
+        jcl.dump(new java.io.File("/home/shane/Projects/jfunc/build/org/apache/java/lang/Object$$EnhancedBySimplestore$$0.class"));
         return jcl;
     }
     
@@ -962,16 +931,20 @@ public class Enhancer implements org.apache.bcel.Constants {
         cg.getClassName(),
         FIELD_NAME,
         new ObjectType(INTERCEPTOR_CLASS),
+        //new ObjectType(INVOCATION_CLASS),
         GETFIELD));
         
        // INVOKE AFTER RETURN 
         il.append(new ALOAD(0)); //this
         il.append(factory.createGetStatic(cg.getClassName(), fieldName, METHOD_OBJECT));
         il.append(new ALOAD(argArray));
-        il.append(new ILOAD(superInvoked));
-        il.append(new ALOAD(resultFromSuper));
-        il.append(new ALOAD(error));
-        il.append(new INVOKEINTERFACE(after, 7));
+//          il.append(new ILOAD(superInvoked));
+//          il.append(new ALOAD(resultFromSuper));
+//          il.append(new ALOAD(error));
+        il.append(new INVOKEINTERFACE(after, 
+                                      4 
+                                      //7
+                                      ));
         
        //GENERATE RETURN VALUE 
         InstructionHandle exitMethod =
