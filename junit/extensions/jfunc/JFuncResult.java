@@ -51,12 +51,26 @@ public class JFuncResult extends TestResult implements AssertListener {
         return (Vector) fListeners.clone();
     }
 
+    // damn TestCase
+//      protected void run(final TestCase test) {
+
+//          // any other way to do this?  It's dependent on everyone's use
+//          // of TestResult
+//          if (test instanceof JFuncAssert) {
+//              ((JFuncAssert)test).setResult(this);
+//          }       
+//          super.run(test);
+//      }
+        
+
     public Test getTestProxy(Test test) throws InstantiationException {
         InvocationHandler handler = new RunningTestProxy(this, test);
         Class cl = test.getClass();
+
         if (test instanceof JFuncAssert) {
             ((JFuncAssert)test).setResult(this);
         }
+
         //throw new InstantiationException("no proxy generator yet");
         try {
             Class proxy = TestletWrapper.getProxy(new Class[0], cl);
@@ -76,29 +90,40 @@ public class JFuncResult extends TestResult implements AssertListener {
     class RunningTestProxy implements InvocationHandler {
         Test test;
         TestResult result;
-
+        Listener listener;
         public RunningTestProxy(TestResult r, Test t) {
             result = r;
             test = t;
+            listener = new Listener();
+            result.addListener(listener);
         }
         
         public Object invoke(Object proxy, Method method, Object[] args) {
             // figure out how to make this thing return a value
             // might want to have just one listener who's value is flushable
-            Listener listener = new Listener();
-            result.addListener(listener);
+            listener.init();
             new TestletWrapper(test, method, args).run(result);
-            result.removeListener(listener);
+            //result.removeListener(listener);
             return new Integer(listener.status());
             //return null;
         }
     }
 
     class Listener implements AssertListener {
-        boolean gotAssert = false;
-        boolean gotFailure = false;
-        boolean gotError = false;
+        boolean gotAssert;
+        boolean gotFailure;
+        boolean gotError;
 
+        Listener() {
+            init();
+        }
+        
+        public void init() {
+            gotAssert = false;
+            gotFailure = false;
+            gotError = false;
+        }
+            
         /**
          * An assert happened.
          **/

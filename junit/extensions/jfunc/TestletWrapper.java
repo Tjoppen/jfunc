@@ -2,6 +2,7 @@ package junit.extensions.jfunc;
 
 import junit.framework.*;
 import com.develop.delegator.ProxyLoader;
+//import com.terraspring.hh.util.ProxyPlus;
 
 import java.lang.reflect.*;
 
@@ -41,7 +42,8 @@ public class TestletWrapper implements Test {
         
     public void run(final TestResult result) {
         result.startTest(this);
-            
+        if (instance instanceof JFuncAssert) 
+            ((JFuncAssert)instance).setResult(result);
         Protectable p = new Protectable() {
                 public void protect() throws Throwable {
                     runBare(result);
@@ -72,7 +74,7 @@ public class TestletWrapper implements Test {
             buff.delete(0, 2);
             arg = buff.toString();
         }
-        return instance.getClass().getName() + "." + name() + "(" +
+        return JFuncTestCase.shortName(instance.getClass()) + "." + name() + "(" +
             arg + ")";
     }
 
@@ -82,9 +84,7 @@ public class TestletWrapper implements Test {
         return ProxyLoader.getProxyClass(cl.getClassLoader(), interfaces, cl);
 
         // Based on Sun's Proxy code (license issues)
-//          return (Test) ProxyPlus.newProxyInstance(
-//                   cl.getClassLoader(), new Class[0], cl, handler);
-
+        //return ProxyPlus.getProxyClass(cl.getClassLoader(), new Class[0], cl);
     }
 
 }

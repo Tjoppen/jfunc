@@ -1,4 +1,4 @@
-package junit.extensions.jfunc.tests;
+package junit.extensions.jfunc.samples;
 
 import junit.framework.*;
 import junit.extensions.jfunc.*;
@@ -19,6 +19,7 @@ public class SimpleTest extends JFuncTestCase {
 
     public SimpleTest(String name) {
         super(name);
+        setFatal(false);
     }
 
     public SimpleTest(String name, boolean failsAreFatal) {
@@ -27,8 +28,6 @@ public class SimpleTest extends JFuncTestCase {
     }
            
     protected void setUp() {
-//          fValue1= 2;
-//          fValue2= 3;
     }
 
     public void testMultipleFailures() {
@@ -38,8 +37,8 @@ public class SimpleTest extends JFuncTestCase {
     }
 
     public void testVerboseAssertions() {
-        vassert("good old numbers", 3, 1);
         vassert("bad new numbers", 1, 1);
+        vassert("good old numbers", 3, 1);
         vassert("Found some similarities", "No similarities found", true);
         vassert("Found some similarities", "No similarities found", false);
     }
@@ -60,6 +59,10 @@ public class SimpleTest extends JFuncTestCase {
     public void testSharing() {
         assert("sharing should always start out false", sharing == false);
         sharing = true;
+    }
+
+    public void testThrows() {
+        throw new RuntimeException("exception message");
     }
 
 

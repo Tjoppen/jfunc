@@ -1,0 +1,6 @@
+#!/bin/sh
+# jfuncrunner
+if [ -z "$CLASSPATH" ]; then
+	echo "warning: classpath is not set in environment" >&2
+fi
+java junit.extensions.jfunc.textui.JFuncRunner "$@"

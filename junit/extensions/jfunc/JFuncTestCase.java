@@ -5,6 +5,7 @@ import junit.framework.*;
 import java.lang.reflect.*;
 
 /**
+// XXX these javadocs need to be re-written
  * A test case defines the fixture to run multiple tests. To define a test case<br>
  * 1) implement a subclass of TestCase<br>
  * 2) define instance variables that store the state of the fixture<br>
@@ -69,12 +70,13 @@ import java.lang.reflect.*;
  *      return suite;
  *  }
  * </pre>
- * @see TestResult
- * @see TestSuite
+ * @see JFuncResult
+ * @see JFuncSuite
  */
 // We would simply extend TestCase, but we want to use our own
 // non-static Assert class
-public abstract class JFuncTestCase extends VerboseAssert implements Test {
+public abstract class JFuncTestCase extends VerboseAssert 
+    implements Test, Cloneable {
     /**
      * the name of the test case
      */
@@ -109,7 +111,8 @@ public abstract class JFuncTestCase extends VerboseAssert implements Test {
      * @see TestResult
      */
     protected TestResult createResult() {
-        return new TestResult();
+        //return new TestResult();
+        return new JFuncResult();
     }
     /**
      * Gets the name of the test case.
@@ -134,13 +137,17 @@ public abstract class JFuncTestCase extends VerboseAssert implements Test {
      * Runs the test case and collects the results in TestResult.
      */
     public void run(TestResult result) {
+        // This isn't run when used with the TestletWrapper.
+        // If it were, we couldn't have arguments to our code anyway
+
         // if we could extend junit.framework.TestCase this code would look like
         // setResult(result)
         // super.run(result);
         final JFuncTestCase test = this;
         //if (!isFatal()) 
         setResult(result);  // Assert needs this info to do non-fatal asserts
-        
+
+        //System.err.println("JFuncTestCase.wtf");
         result.startTest(test);
         Protectable p= new Protectable() {
                 public void protect() throws Throwable {
@@ -214,8 +221,14 @@ public abstract class JFuncTestCase extends VerboseAssert implements Test {
      * Returns a string representation of the test case
      */
     public String toString() {
-        return name()+"("+getClass().getName()+")";
+        return shortName(getClass()) + "." + name()+"()";
     }
+
+    public static String shortName(Class cl) {
+        String classname = cl.getName();
+        return classname.substring(classname.lastIndexOf('.') + 1);
+    }
+    
     /**
      * Gets the name of a TestCase
      * @return returns a String

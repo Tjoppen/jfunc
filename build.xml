@@ -18,6 +18,7 @@
   			<classpath>
 				<pathelement location="lib/jcfe.jar" />
 				<pathelement location="lib/junit.jar" />
+				<pathelement location="/home/shane/src/hh/build/lib/hh.jar" />
 			</classpath>
 		</javac>
 
@@ -29,6 +30,18 @@
 				<pathelement location="build" />
 				<pathelement location="lib/junit.jar" />
 				<pathelement location="lib/jcfe.jar" />
+				<pathelement location="/home/shane/src/hh/build/lib/hh.jar" />
+			</classpath>
+		</java>
+	</target>
+	<target name="sample" depends="build">
+		<java classname="junit.textui.TestRunner" fork="yes">
+			<arg value="junit.extensions.jfunc.samples.OrderedTest" />
+			<classpath>
+				<pathelement location="build" />
+				<pathelement location="lib/junit.jar" />
+				<pathelement location="lib/jcfe.jar" />
+				<pathelement location="/home/shane/src/hh/build/lib/hh.jar" />
 			</classpath>
 		</java>
 	</target>
@@ -77,6 +90,7 @@
 			<classpath>
 				<pathelement location="build" />
 				<pathelement location="lib/junit.jar" />
+				<pathelement location="/home/shane/src/hh/build/lib/hh.jar" />
 			</classpath>
 		</java>
 	</target>

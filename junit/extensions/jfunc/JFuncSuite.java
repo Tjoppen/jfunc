@@ -74,6 +74,11 @@ public class JFuncSuite extends TestSuite {
      * interfere with one anothers data.  (<b>Read:</b> Don't use it
      * if you can avoid it.)
      **/
+    // this needs a better name
+    public void cloneTests(boolean yes) {
+        oneInstancePerTest(yes);
+    }
+
     public void oneInstancePerTest(boolean yes) {
         oneInstancePerTest = yes;
     }
@@ -103,6 +108,8 @@ public class JFuncSuite extends TestSuite {
               return (Test) cons.newInstance(new Object[] { handler });
           } catch (InstantiationException ie) {
               throw ie;
+          } catch (InvocationTargetException ite) {
+              throw new InstantiationException(ite.getTargetException().toString());
           } catch (Exception e) {
               throw new InstantiationException(e.toString());
           }
@@ -135,7 +142,16 @@ public class JFuncSuite extends TestSuite {
                  **/
                 try {
                     // why aren't I cloning these instead?
-                    t = (Test) test.getClass().newInstance();
+                    // oh, now I remember.  
+                    // cloning is bad anyhow... but this doesn't take into
+                    // account that the constructor might actually set up
+                    // some state information.  I could unprotected clone()
+                    // reflectively and then use it?
+//                      if (test instanceof Cloneable) {
+//                          t = (Test) test.clone(); //getClass().newInstance();
+//                      } else {
+                        t = (Test) test.getClass().newInstance();
+//                      }
                 } catch (Exception e) {
                     suite.addTest(warning(e.toString()));
                     return null;

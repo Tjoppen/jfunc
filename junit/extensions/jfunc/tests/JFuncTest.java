@@ -2,9 +2,12 @@ package junit.extensions.jfunc.tests;
 
 import junit.framework.*;
 import junit.extensions.jfunc.*;
+import junit.extensions.jfunc.samples.*;
 
 /**
- * Tests the JFunc framework itself
+ * Tests the JFunc framework itself.  This isn't meant to demonstrate
+ * how to use the JFunc framework.  It only tests the framework.
+ * Check out the samples directory for examples of use.
  **/
 public class JFuncTest extends TestCase {
 
@@ -43,6 +46,28 @@ public class JFuncTest extends TestCase {
         test.testMultipleFailures();
         assert("should have had three failures instead: "+ result.failureCount(), 
                result.failureCount() == 3);
+    }
+
+    public void testTestletWrapper() throws Exception {
+        JFuncSuite suite = new JFuncSuite();
+        SimpleTest test = new SimpleTest();
+        test = (SimpleTest) suite.getTestProxy(test);
+        test.testMultipleFailures();
+        TestletWrapper wrapper = (TestletWrapper) suite.testAt(0);
+        TestFailure failure = new TestFailure(wrapper, new Exception("testing"));
+        //System.err.println(wrapper.toString());
+        assert(wrapper.toString().equals("SimpleTest.testMultipleFailures()"));
+        assert(wrapper.name().equals("testMultipleFailures"));
+        assert(failure.toString().equals("SimpleTest.testMultipleFailures(): testing"));
+        //System.err.println(failure);
+    }
+
+    public void testJFuncTestCase() throws Exception {
+        JFuncTestCase test = new SimpleTest("testMultipleFailures");
+        TestFailure failure = new TestFailure(test, new Exception("testing"));
+        assert(test.toString().equals("SimpleTest.testMultipleFailures()"));
+        assert(test.name().equals("testMultipleFailures"));
+        assert(failure.toString().equals("SimpleTest.testMultipleFailures(): testing"));
     }
 
     public void testReturnValues() throws Exception {
@@ -107,6 +132,35 @@ public class JFuncTest extends TestCase {
         result.addListener(listen);
         test.run(result);
         assert("failed to pass verbose assertion to listener", listen.gotAssert);
+    }
+
+    public void testInnerTest() throws Exception {
+        JFuncSuite suite = new JFuncSuite();
+        InnerTest test = new InnerTest();
+        test = (InnerTest) suite.getTestProxy(test);
+        test.testPassed();
+        test.testFailed();
+        //junit.extensions.jfunc.textui.JFuncRunner.run(suite);
+    }
+
+    public static class InnerTest extends JFuncTestCase {
+
+        public InnerTest() {
+            //this(false);
+        }
+
+        public InnerTest(boolean fatal) {
+            //setFatal(fatal);
+        }
+
+        public void testPassed() {
+            assert(true);
+        }
+
+        public void testFailed() {
+            assert(false);
+        }
+
     }
 
     class Listener implements AssertListener {

@@ -57,8 +57,8 @@ public class JFuncAssert {
     public void setFatal(boolean fatal) {
         if (test == null && !fatal) {
             throw new IllegalArgumentException("Must provide Assert with a " +
-                                               "Test during construction, if it's not being used from an " +
-                                               "extending class.");
+                  "Test during construction, if it's not being used from an " +
+                  "extending class.");
         }
         this.fatal = fatal;
     }
@@ -84,6 +84,10 @@ public class JFuncAssert {
         return result;
     }
 
+    /**
+     * Must be set prior to running test, if test is intended to do
+     * non-fatal assertions.
+     **/
     public void setResult(TestResult result) {
         this.result = result;
     }
@@ -135,7 +139,8 @@ public class JFuncAssert {
         } else {
             if (!isFatal()) {
                 System.err.println("setResult on Assert is not being " +
-                                   "called to allow for NonFatalAsserts to work properly");
+                      "called to allow for NonFatalAsserts to work properly" +
+                      " (result = " + result + ", test = " + test + ")");
             }
             //Old behavior (one failure per test)
             throw new AssertionFailedError(message);

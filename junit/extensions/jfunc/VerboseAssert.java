@@ -39,8 +39,7 @@ public abstract class VerboseAssert extends JFuncAssert {
     public void vassert(String successMessage,
                        String failureMessage,
                        boolean condition) {
-        vassert((condition ? successMessage : failureMessage), null, 
-               null, condition);
+        vassert((condition ? successMessage : failureMessage), condition);
     }
 
     public void vassert(String description,
