@@ -1,113 +1,49 @@
-/*
- * The Apache Software License, Version 1.1
- *
- *
- * Copyright (c) 2001 The Apache Software Foundation.  All rights
- * reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The end-user documentation included with the redistribution,
- *    if any, must include the following acknowledgment:
- *       "This product includes software developed by the
- *        Apache Software Foundation (http://www.apache.org/)."
- *    Alternately, this acknowledgment may appear in the software itself,
- *    if and wherever such third-party acknowledgments normally appear.
- *
- * 4. The names "Apache Cocoon" and "Apache Software Foundation" must
- *    not be used to endorse or promote products derived from this
- *    software without prior written permission. For written
- *    permission, please contact apache@apache.org.
- *
- * 5. Products derived from this software may not be called "Apache",
- *    nor may "Apache" appear in their name, without prior written
- *    permission of the Apache Software Foundation.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- * ====================================================================
- *
- * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Software Foundation.  For more
- * information on the Apache Software Foundation, please see
- * <http://www.apache.org/>.
- */
-//package org.apache.commons.simplestore.tools;
 package junit.extensions.jfunc.util;
-
-import java.lang.reflect.*;
 
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.*;
 
+import java.lang.reflect.*;
+import java.lang.ref.*;
+import java.util.*;
+
 /**
- * this code returns Enhanced Vector to intercept  all methods for tracing
- *   <pre>
- *         java.util.Vector vector = (java.util.Vector)Enhancer.enhance(
- *        java.util.Vector.class,
- *        new Class[]{java.util.List.class},
+ * <code>ProxyPlus</code> provides static methods for creating dynamic
+ * proxy classes and instances, but allows for more flexibility than
+ * typical proxies in that it allows you to specify the superclass of
+ * the proxy instance, rather than being restricing to subclasses of
+ * Proxy.
  *
- *        new MethodInterceptor(){
+ * <p><b>Note:</b> parent class must provide a default constructor
+ * either public or protected.  (If the interfaces aren't public there
+ * may be problems with having a constructor that isn't public.)
  *
- *            public Object beforeInvoke( Object obj,java.lang.reflect.Method method,
- *            Object args[] )
- *            throws java.lang.Throwable{
- *                return null;
- *            }
- *
- *            public boolean invokeSuper( Object obj,java.lang.reflect.Method method,
- *            Object args[], Object retValFromBefore )
- *            throws java.lang.Throwable{
- *                return true;
- *            }
- *
- *
- *        public Object afterReturn(  Object obj,     java.lang.reflect.Method method,
- *        Object args[],  Object retValFromBefore,
- *        boolean invokedSuper, Object retValFromSuper,
- *        java.lang.Throwable e )throws java.lang.Throwable{
- *            System.out.println(method);
- *            return retValFromSuper;//return the same as supper
- *        }
- *
- *    });
+ * <p>To create a proxy for some class <code>Foo</code>:
+ * <pre>
+ *     InvocationHandler handler = new MyInvocationHandler(...);
+ *     Class proxyClass = Proxy.getProxyClass(
+ *         Foo.class.getClassLoader(), new Class[0], Foo.class);
+ *     Foo f = (Foo) proxyClass.
+ *         getConstructor(new Class[] { InvocationHandler.class }).
+ *         newInstance(new Object[] { handler });
  * </pre>
- *@author     Juozas Baliuka <a href="mailto:baliuka@mwm.lt">
- *      baliuka@mwm.lt</a>
- *@version    $Id: Enhancer.java,v 1.5 2002/06/28 18:53:55 semios Exp $
- */
-public class Enhancer implements org.apache.bcel.Constants {
-    
-    
-    
-    static final String INTERCEPTOR_CLASS = MethodInterceptor.class.getName();
+ * or more simply:
+ * <pre>
+ *     Foo f = (Foo) Proxy.newProxyInstance(Foo.class.getClassLoader(),
+ *                                          new Class[0],
+ *                                          Foo.class,
+ *                                          handler);
+ * </pre>
+ *
+ **/
+public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
     static final String INVOCATION_CLASS = InvocationHandler.class.getName();
     static final ObjectType BOOLEAN_OBJECT =
         new ObjectType(Boolean.class.getName());
-    static final ObjectType INTEGER_OBJECT =
+    static final ObjectType INTEGER_OBJECT = 
         new ObjectType(Integer.class.getName());
-    static final ObjectType CHARACTER_OBJECT =
+    static final ObjectType CHARACTER_OBJECT = 
         new ObjectType(Character.class.getName());
     static final ObjectType BYTE_OBJECT = new ObjectType(Byte.class.getName());
     static final ObjectType SHORT_OBJECT = new ObjectType(Short.class.getName());
@@ -120,11 +56,11 @@ public class Enhancer implements org.apache.bcel.Constants {
     static final String CONSTRUCTOR_NAME = "<init>";
     static final String FIELD_NAME = "h";
     static final String SOURCE_FILE = "<generated>";
-    static final String CLASS_SUFIX = "$$EnhancedBySimplestore$$";
+    static final String CLASS_SUFIX = "$ProxyPlus";
     static final String CLASS_PREFIX = "org.apache.";
     static int index = 0;
     static java.util.Map factories = new java.util.HashMap();
-    
+
     private static int addAfterConstructionRef(ConstantPoolGen cp) {
         return cp.addMethodref(
                                Enhancer.class.getName(),
@@ -138,16 +74,7 @@ public class Enhancer implements org.apache.bcel.Constants {
                                "<init>",
                                "(L"+ INVOCATION_CLASS.replace('.','/') +";)V");
     }
-    
-    
    
-    private static int addAfterRef(ConstantPoolGen cp) {
-        return cp.addInterfaceMethodref(
-                                        INTERCEPTOR_CLASS,
-                                        "afterReturn",
-                                        "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;ZLjava/lang/Object;Ljava/lang/Throwable;)Ljava/lang/Object;");
-    }
-
     private static int addInvokeRef(ConstantPoolGen cp) {
         // http://jakarta.apache.org/bcel/manual.html
         // should use the Type.getMethodSignature() here
@@ -159,24 +86,13 @@ public class Enhancer implements org.apache.bcel.Constants {
                                         "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;");
     }
 
-    private static int addInvokeSupperRef(ConstantPoolGen cp) {
-        return cp.addInterfaceMethodref(
-                                        INTERCEPTOR_CLASS,
-                                        "invokeSuper",
-                                        "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Z");
-    }
-    /*
-      private static int addBeforeRef(ConstantPoolGen cp) {
-      return cp.addInterfaceMethodref(
-      INTERCEPTOR_CLASS,
-      "beforeInvoke",
-      "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;");
-      }*/
     private static java.util.List costructionHandlers = new java.util.Vector();
     private static java.util.Map cache = new java.util.WeakHashMap();
     /** Creates a new instance of Enhancer */
     
-    protected Enhancer() {}
+    protected ProxyPlus(InvocationHandler h) {
+        super(h);
+    }
     public static void setInvocationHandler(Object enhanced, InvocationHandler ih)
         throws Throwable {
         enhanced.getClass().getField(FIELD_NAME).set(enhanced, ih);
@@ -386,7 +302,7 @@ public class Enhancer implements org.apache.bcel.Constants {
         return gen;
     }
     
-    private static JavaClass enhance(
+    public static JavaClass enhance(
                                      Class parentClass,
                                      String class_name,
                                      Class interfaces[],
@@ -398,7 +314,7 @@ public class Enhancer implements org.apache.bcel.Constants {
         addConstructor(cg);
         //int after = addAfterRef(cp);
         int after = addInvokeRef(cp);
-        int invokeSuper = addInvokeSupperRef(cp);
+        //int invokeSuper = addInvokeSupperRef(cp);
         //int invokeSuper = addInvokeRef(cp);
         java.util.Set methodSet = new java.util.HashSet();
         
@@ -427,7 +343,7 @@ public class Enhancer implements org.apache.bcel.Constants {
             // in the generated code
             java.lang.reflect.Method method = ((MethodWrapper) i.next()).method;
             String fieldName = "METHOD_" + (cntr++);
-            cg.addMethod(generateMethod(method, fieldName, cg,  after, invokeSuper));
+            cg.addMethod(generateMethod(method, fieldName, cg,  after));//, invokeSuper));
             methodTable.put(fieldName, method);
         }
         JavaClass jcl = cg.getJavaClass();
@@ -834,8 +750,9 @@ public class Enhancer implements org.apache.bcel.Constants {
                                          java.lang.reflect.Method method,
                                          String fieldName,
                                          ClassGen cg,
-                                         int after,
-                                         int invokeSuper) {
+                                         int after
+                                         //,int invokeSuper
+                                         ) {
         
         InstructionList il = new InstructionList();
         InstructionFactory factory = new InstructionFactory(cg);
@@ -1023,6 +940,5 @@ public class Enhancer implements org.apache.bcel.Constants {
         
         return false;
     }
-    
-    
+
 }
