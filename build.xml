@@ -122,6 +122,20 @@
                         </classpath>
                 </java>
         </target>
+        <target name="jfunctest" depends="build">
+                        <java classname="junit.extensions.jfunc.textui.JFuncRunner" fork="yes">
+                        <!--jvmarg value="-noverify" /-->
+                        <arg value="--color"/>
+                        <arg value="junit.extensions.jfunc.tests.AllTests" />
+                        <classpath>
+                                <pathelement location="build" />
+                                <pathelement location="lib/junit.jar" />
+                                <pathelement location="lib/jcfe.jar" />
+                                <pathelement location="lib/bcel.jar" />
+                        </classpath>
+                </java>
+        </target>
+
 
         <target name="zip">
                 <!-- !!! hard code names, variable substitution doesn't work !!! -->
