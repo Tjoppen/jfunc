@@ -17,8 +17,9 @@ import junit.extensions.jfunc.runner.BaseTestRunner;
  */
 public class JFuncRunner extends BaseTestRunner {
     PrintStream fWriter= System.out;
-    private Boolean verbose = null;
-    private Boolean color = null;
+
+    private boolean verbose = "true".equals(getPreference("jfunc.color"));
+    private boolean color = "true".equals(getPreference("jfunc.color"));
 
     /**
      * Constructs a TestRunner.
@@ -53,7 +54,7 @@ public class JFuncRunner extends BaseTestRunner {
         
     public TestResult doRun(Test suite, boolean wait) {
         TestResult result= createTestResult();
-        if (beVerbose()) 
+        if (verbose()) 
             result.addListener(new VerboseListener());
         else
             result.addListener(new StatusListener());
@@ -83,18 +84,33 @@ public class JFuncRunner extends BaseTestRunner {
         }
     }
 
-    public boolean useColor() {
-        if (color != null) {
-            return color.booleanValue();
-        }
-        return "true".equals(getPreference("jfunc.color"));
+    /**
+     * @return true, if the runner will print with ANSI colors, false otherwise.
+     **/
+    public boolean color() {
+        return color;
     }
 
-    public boolean beVerbose() {
-        if (verbose != null) {
-            return verbose.booleanValue();
-        }
-        return "true".equals(getPreference("jfunc.verbose"));
+
+    /**
+     * @param useColor tell runner to use color or not.
+     **/
+    public void setColor(boolean useColor) {
+        this.color = useColor;
+    }
+
+    /**
+     * @return true, if the runner will be verbose, false otherwise.
+     **/
+    public boolean verbose() {
+        return verbose;
+    }
+
+    /**
+     * @param beVerbose tell runner to be verbose or not.
+     **/
+    public void setVerbose(boolean beVerbose) {
+        this.verbose = beVerbose;
     }
 
     // <AssertListener> 
@@ -104,7 +120,7 @@ public class JFuncRunner extends BaseTestRunner {
         ColorWriter out = new ColorWriter(writer());
 
         public StatusListener() {
-            out.enableColor(useColor());
+            out.enableColor(color());
         }
 
         public synchronized void startTest(Test test) {
@@ -142,7 +158,7 @@ public class JFuncRunner extends BaseTestRunner {
         ColorWriter out = new ColorWriter(writer());
 
         public VerboseListener() {
-            out.enableColor(useColor());
+            out.enableColor(color());
         }
 
         public void startTest(Test test) {
@@ -315,9 +331,9 @@ public class JFuncRunner extends BaseTestRunner {
             else if (args[i].equals("--version"))
                 System.err.println("JFunc by Shane Celis derived from JUnit "+Version.id()+" by Kent Beck and Erich Gamma");
             else if (args[i].equals("-v") || args[i].equals("--verbose")) 
-                verbose = new Boolean(true);
+                verbose = true;
             else if (args[i].equals("--color"))
-                color = new Boolean(true);
+                color = true;
             else
                 testCase= args[i];
         }
