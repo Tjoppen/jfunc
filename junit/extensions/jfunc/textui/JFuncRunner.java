@@ -17,7 +17,7 @@ import junit.extensions.jfunc.runner.BaseTestRunner;
  */
 public class JFuncRunner extends BaseTestRunner {
     PrintStream fWriter= System.out;
-
+    protected ColorWriter writer;
     private boolean verbose = "true".equals(getPreference("jfunc.color"));
     private boolean color = "true".equals(getPreference("jfunc.color"));
 
@@ -117,7 +117,7 @@ public class JFuncRunner extends BaseTestRunner {
 
     class StatusListener implements AssertListener {
         int fColumn= 0;
-        ColorWriter out = new ColorWriter(writer());
+        ColorWriter out = colorWriter();
 
         public StatusListener() {
             out.enableColor(color());
@@ -155,7 +155,7 @@ public class JFuncRunner extends BaseTestRunner {
     }
 
     class VerboseListener implements AssertListener {
-        ColorWriter out = new ColorWriter(writer());
+        ColorWriter out = colorWriter();
 
         public VerboseListener() {
             out.enableColor(color());
@@ -272,12 +272,17 @@ public class JFuncRunner extends BaseTestRunner {
     public void printHeader(TestResult result) {
         if (result.wasSuccessful()) {
             writer().println();
-            writer().print("OK");
+            // maybe add some color here
+            colorWriter().setColor(ColorWriter.GREEN);
+            colorWriter().print("OK");
+            colorWriter().setColor(ColorWriter.DEFAULT);
             writer().println (" (" + result.runCount() + " tests)");
 
         } else {
             writer().println();
-            writer().println("FAILURES!!!");
+            colorWriter().setColor(ColorWriter.RED);
+            colorWriter().println("FAILURES!!!");
+            colorWriter().setColor(ColorWriter.DEFAULT);
             writer().println("Tests run: "+result.runCount()+ 
                              ",  Failures: "+result.failureCount()+
                              ",  Errors: "+result.errorCount());
@@ -359,6 +364,14 @@ public class JFuncRunner extends BaseTestRunner {
     protected void runFailed(String message) {
         System.err.println(message);
         System.exit(1);
+    }
+
+    protected ColorWriter colorWriter() {
+        if (writer == null) { 
+            writer = new ColorWriter(writer());
+            writer.enableColor(color());
+        }
+        return writer;
     }
                 
     protected PrintStream writer() {
