@@ -1,5 +1,61 @@
+/*
+ * The Apache Software License, Version 1.1
+ *
+ *
+ * Copyright (c) 2001 The Apache Software Foundation.  All rights
+ * reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The end-user documentation included with the redistribution,
+ *    if any, must include the following acknowledgment:
+ *       "This product includes software developed by the
+ *        Apache Software Foundation (http://www.apache.org/)."
+ *    Alternately, this acknowledgment may appear in the software itself,
+ *    if and wherever such third-party acknowledgments normally appear.
+ *
+ * 4. The names "Apache Cocoon" and "Apache Software Foundation" must
+ *    not be used to endorse or promote products derived from this
+ *    software without prior written permission. For written
+ *    permission, please contact apache@apache.org.
+ *
+ * 5. Products derived from this software may not be called "Apache",
+ *    nor may "Apache" appear in their name, without prior written
+ *    permission of the Apache Software Foundation.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by many
+ * individuals on behalf of the Apache Software Foundation.  For more
+ * information on the Apache Software Foundation, please see
+ * <http://www.apache.org/>.
+ */
+
 package junit.extensions.jfunc.util;
 
+import org.apache.bcel.Constants;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.*;
@@ -9,10 +65,10 @@ import java.lang.ref.*;
 import java.util.*;
 
 /**
- * <code>ProxyPlus</code> provides static methods for creating dynamic
- * proxy classes and instances, but allows for more flexibility than
- * typical proxies in that it allows you to specify the superclass of
- * the proxy instance, rather than being restricing to subclasses of
+ * ProxyPlus provides static methods for creating dynamic proxy
+ * classes and instances, but allows for more flexibility than typical
+ * proxies in that it allows you to specify the superclass of the
+ * proxy instance, rather than being restricing to subclasses of
  * Proxy.
  *
  * <p><b>Note:</b> parent class must provide a default constructor
@@ -35,10 +91,13 @@ import java.util.*;
  *                                          Foo.class,
  *                                          handler);
  * </pre>
- *
+ * @author Juozas Baliuka <a href="mailto:baliuka@mwm.lt">baliuka@mwm.lt</a>
+ *<!-- if there is anyone I'm neglecting to mention for credit here, contact me-->
+ * @author Shane Celis 
+ *  <a href="mailto:shane@terraspring.com">shane@terraspring.com</a>
+ * @version $Id: ProxyPlus.java,v 1.3 2002/06/29 05:15:59 semios Exp $
  **/
-public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
-
+public class ProxyPlus extends Proxy {
     static final String INVOCATION_CLASS = InvocationHandler.class.getName();
     static final ObjectType BOOLEAN_OBJECT =
         new ObjectType(Boolean.class.getName());
@@ -60,9 +119,16 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
     static final String FIELD_NAME = "h";
     static final String SOURCE_FILE = "<generated>";
     static final String CLASS_SUFIX = "$ProxyPlus";
-    // should I keep this?
+    // XXX should I keep this?
     static final String CLASS_PREFIX = "org.apache.";
     static int index = 0;
+
+    /** 
+     * Just a little syntactic sugar, so that I don't have to
+     * reference everything by Constants.ACC_PUBLIC, I can instead
+     * just say c.ACC_PUBLIC
+     **/
+    private static final TerseConstants c = new TerseConstants();
     private static java.util.List costructionHandlers = new java.util.Vector();
     private static java.util.Map cache = new java.util.WeakHashMap();
     
@@ -103,8 +169,11 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
 
     public static InvocationHandler getInvocationHandler(Object proxy){
         Class cl = proxy.getClass();
-        if (!isProxyClass(cl)) {
-            throw new IllegalArgumentException("not a proxy instance");
+        if (!isProxyPlusClass(cl)) {
+            throw new IllegalArgumentException("not a proxy plus instance");
+        }
+        if (isProxyClass(cl)) {
+            return Proxy.getInvocationHandler(proxy);
         }
         try{      
             return (InvocationHandler) cl.getField(FIELD_NAME).get(proxy);
@@ -115,19 +184,24 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
         }
     }
 
-    public static boolean isProxyClass(Class cl) {
-        if (Proxy.isProxyClass(cl)) {
-            return true;
-        } else {
-            return isProxyPlusClass(cl);
-        }
-    }
+    // I thought it poor to change this behavior after all
+//      public static boolean isProxyClass(Class cl) {
+//          if (Proxy.isProxyClass(cl)) {
+//              return true;
+//          } else {
+//              return isProxyPlusClass(cl);
+//          }
+//      }
 
+    /**
+     * @return true if it's a proxy Plus class, false otherwise
+     **/
     public static boolean isProxyPlusClass(Class cl) {
         Map map = (Map) cache.get(cl.getClassLoader());
         return map.containsValue(cl);
     }
 
+    
     public static Class getProxyClass(Class[] interfaces,
                                       Class superclass) {
         return getProxyClass(Thread.currentThread().getContextClassLoader(),
@@ -245,7 +319,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                               true, 
                               loader)}).newInstance(new Object[] { ih });
         } catch (ClassNotFoundException e) {
-            // this actually means something different
+            // this actually means something different than CNFE,
             // it means the loader can't see that interface
             throw e;
         } catch (NoSuchMethodException e) {
@@ -269,34 +343,34 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
         InstructionFactory factory = new InstructionFactory(cg);
         ConstantPoolGen cp = cg.getConstantPool(); // cg creates constant pool
         InstructionList il = new InstructionList();
-        MethodGen costructor = new MethodGen(ACC_PUBLIC, // access flags
+        MethodGen costructor = new MethodGen(c.ACC_PUBLIC, // access flags
                                              Type.VOID, // return type
                                              new Type[] { // argument types
             new ObjectType(INVOCATION_CLASS)}, null, CONSTRUCTOR_NAME, 
             cg.getClassName(), il, cp);
-            
-            
+                        
         il.append(new ALOAD(0));
-        il.append(factory.createInvoke(
+        il.append(factory.createInvoke(//"java.lang.Object",
                                        parentClass,
                                        CONSTRUCTOR_NAME,
                                        Type.VOID,
                                        new Type[] {},
-                                       INVOKESPECIAL));
+                                       c.INVOKESPECIAL));
         il.append(new ALOAD(0));
         il.append(new ALOAD(1));
         il.append(factory.createFieldAccess(
                                             cg.getClassName(),
                                             FIELD_NAME,
                                             new ObjectType(INVOCATION_CLASS),
-                                            PUTFIELD));
+                                            c.PUTFIELD));
+
         il.append(new RETURN());
         cg.addMethod(getMethod(costructor));
     }
         
     private static void addHandlerField(ClassGen cg) {
         ConstantPoolGen cp = cg.getConstantPool();
-        FieldGen fg = new FieldGen(ACC_PUBLIC, new ObjectType(INVOCATION_CLASS), 
+        FieldGen fg = new FieldGen(c.ACC_PUBLIC, new ObjectType(INVOCATION_CLASS), 
                                    FIELD_NAME, cp);
         cg.addField(fg.getField());
     }
@@ -305,17 +379,16 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                         Class parentClass,
                                         Class[] interfaces) {
         ClassGen gen = new ClassGen(class_name, parentClass.getName(), 
-                                    SOURCE_FILE, ACC_PUBLIC, null);
+                                    SOURCE_FILE, c.ACC_PUBLIC, null);
         if (interfaces != null) {
             for (int i = 0; i < interfaces.length; i++) {
                 gen.addInterface(interfaces[i].getName());
             }
         }
-        gen.addInterface( Factory.class.getName() );
         return gen;
     }
     
-    public static JavaClass enhance(Class parentClass,
+    private static JavaClass enhance(Class parentClass,
                                     String class_name,
                                     Class interfaces[],
                                     java.util.HashMap methodTable) {
@@ -361,7 +434,8 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
     private static void addMethodField(String fieldName, ClassGen cg) {
         ConstantPoolGen cp = cg.getConstantPool();
         FieldGen fg =
-            new FieldGen(ACC_PUBLIC | ACC_STATIC, METHOD_OBJECT, fieldName, cp);
+            new FieldGen(c.ACC_PUBLIC | c.ACC_STATIC, METHOD_OBJECT, 
+                         fieldName, cp);
         cg.addField(fg.getField());
     }
     
@@ -496,7 +570,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                                "booleanValue",
                                                Type.BOOLEAN,
                                                new Type[] {},
-                                               INVOKEVIRTUAL));
+                                               c.INVOKEVIRTUAL));
                 return il.append(new IRETURN());
             } else if (returnType.equals(Type.CHAR)) {
                 IFNONNULL ifNNull = new IFNONNULL(null);
@@ -511,7 +585,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                                "charValue",
                                                Type.CHAR,
                                                new Type[] {},
-                                               INVOKEVIRTUAL));
+                                               c.INVOKEVIRTUAL));
                 return il.append(new IRETURN());
             } else if (returnType.equals(Type.LONG)) {
                 IFNONNULL ifNNull = new IFNONNULL(null);
@@ -526,7 +600,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                                "longValue",
                                                Type.LONG,
                                                new Type[] {},
-                                               INVOKEVIRTUAL));
+                                               c.INVOKEVIRTUAL));
                 return il.append(new LRETURN());
             } else if (returnType.equals(Type.DOUBLE)) {
                 IFNONNULL ifNNull = new IFNONNULL(null);
@@ -542,7 +616,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                                "doubleValue",
                                                Type.DOUBLE,
                                                new Type[] {},
-                                               INVOKEVIRTUAL));
+                                               c.INVOKEVIRTUAL));
                 return il.append(new DRETURN());
             } else if (returnType.equals(Type.FLOAT)) {
                 IFNONNULL ifNNull = new IFNONNULL(null);
@@ -557,7 +631,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                                "floatValue",
                                                Type.FLOAT,
                                                new Type[] {},
-                                               INVOKEVIRTUAL));
+                                               c.INVOKEVIRTUAL));
                 return il.append(new FRETURN());
             } else {
                 IFNONNULL ifNNull = new IFNONNULL(null);
@@ -572,7 +646,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                                "intValue",
                                                Type.INT,
                                                new Type[] {},
-                                               INVOKEVIRTUAL));
+                                               c.INVOKEVIRTUAL));
                 return il.append(new IRETURN());
             }
         }
@@ -720,7 +794,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                          InstructionList il,
                                          ConstantPoolGen cp) {
             
-        return new MethodGen(ACC_PUBLIC,
+        return new MethodGen(c.ACC_PUBLIC,
                              toType(mtd.getReturnType()),
                              toType(mtd.getParameterTypes()),
                              null,
@@ -735,7 +809,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
                                          InstructionList il,
                                          ConstantPoolGen cp) {
             
-        return new MethodGen(ACC_PUBLIC,
+        return new MethodGen(c.ACC_PUBLIC,
                              Type.VOID,
                              toType(mtd.getParameterTypes()),
                              null,
@@ -777,7 +851,7 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
         il.append(factory.createFieldAccess(cg.getClassName(),
                                             FIELD_NAME,
                                             new ObjectType(INVOCATION_CLASS),
-                                            GETFIELD));
+                                            c.GETFIELD));
         
         // INVOKE Handler
         il.append(new ALOAD(0)); //this
@@ -808,43 +882,43 @@ public class ProxyPlus extends Proxy implements org.apache.bcel.Constants {
             if (obj == null || !(obj instanceof MethodWrapper)) {
                 return false;
             }
-            return Enhancer.equals(method, ((MethodWrapper) obj).method );
+            java.lang.reflect.Method m1 = this.method;
+            java.lang.reflect.Method m2 = ((MethodWrapper)obj).method;
+            if (m1 == m2) {
+                return true;
+            }
+            if (m1.getName().equals(m2.getName())) {
+                Class[] params1 = m1.getParameterTypes();
+                Class[] params2 = m2.getParameterTypes();
+                if (params1.length == params2.length) {
+                    for (int i = 0; i < params1.length; i++) {
+                        if (!params1[i].getName().equals(params2[i].getName())) {
+                            return false;
+                        }
+                    }
+                    if(!m1.getReturnType().getName().
+                       equals(m2.getReturnType().getName()) ){
+                        throw new java.lang.IllegalStateException(
+                  "Can't implement:\n" + m1.getDeclaringClass().getName() +
+                  "\n      and\n" + m2.getDeclaringClass().getName() + "\n"+
+                  m1.toString() + "\n" + m2.toString());
+                    }
+                    return true;
+                }
+            }
+            return false;
         }
         public int hashCode() {
             return method.getName().hashCode();
         }
     }
+
+    private static class TerseConstants implements Constants {
+    }
     
-    public static boolean equals(
-                                 java.lang.reflect.Method m1,
-                                 java.lang.reflect.Method m2) {
-        
-        if (m1 == m2) {
-            
-            return true;
-        }
-        if (m1.getName().equals(m2.getName())) {
-            Class[] params1 = m1.getParameterTypes();
-            Class[] params2 = m2.getParameterTypes();
-            if (params1.length == params2.length) {
-                for (int i = 0; i < params1.length; i++) {
-                    if (!params1[i].getName().equals( params2[i].getName() ) ) {
-                        return false;
-                    }
-                }
-                
-                if(!m1.getReturnType().getName().
-                   equals(m2.getReturnType().getName()) ){
-                    throw new java.lang.IllegalStateException(
-                      "Can't implement:\n" + m1.getDeclaringClass().getName() +
-                      "\n      and\n" + m2.getDeclaringClass().getName() + "\n"+
-                      m1.toString() + "\n" + m2.toString());
-                }
-                return true;
-            }
-        }
-        
-        return false;
+    private static boolean equals(java.lang.reflect.Method m1,
+                                  java.lang.reflect.Method m2) {
+        return new MethodWrapper(m1).equals(new MethodWrapper(m2));
     }
 
 }
