@@ -1,8 +1,8 @@
 package junit.extensions.jfunc;
 
 import junit.framework.*;
-import com.develop.delegator.ProxyLoader;
-//import com.terraspring.hh.util.ProxyPlus;
+//import com.develop.delegator.ProxyLoader;
+import junit.extensions.jfunc.util.ProxyPlus;
 
 import java.lang.reflect.*;
 
@@ -142,10 +142,10 @@ public class TestletWrapper implements Test {
     public static Class getProxy(Class[] interfaces, Class superclass) {
         Class cl = superclass;
         // Based on JCFE work (doesn't work as well)
-        return ProxyLoader.getProxyClass(cl.getClassLoader(), interfaces, cl);
+        //return ProxyLoader.getProxyClass(cl.getClassLoader(), interfaces, cl);
 
-        // Based on Sun's Proxy code (license issues)
-        //return ProxyPlus.getProxyClass(cl.getClassLoader(), new Class[0], cl);
+        // Rewritten using BCEL libraries 
+        return ProxyPlus.getProxyClass(cl.getClassLoader(), new Class[0], cl);
     }
 
 }
