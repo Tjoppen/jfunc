@@ -95,7 +95,7 @@ import org.apache.bcel.generic.*;
  * </pre>
  *@author     Juozas Baliuka <a href="mailto:baliuka@mwm.lt">
  *      baliuka@mwm.lt</a>
- *@version    $Id: Enhancer.java,v 1.5 2002/06/28 18:53:55 semios Exp $
+ *@version    $Id: Enhancer.java,v 1.6 2002/06/28 23:16:15 semios Exp $
  */
 public class Enhancer implements org.apache.bcel.Constants {
     
@@ -431,7 +431,7 @@ public class Enhancer implements org.apache.bcel.Constants {
             methodTable.put(fieldName, method);
         }
         JavaClass jcl = cg.getJavaClass();
-        jcl.dump(new java.io.File("/home/shane/Projects/jfunc/build/org/apache/java/lang/Object$$EnhancedBySimplestore$$0.class"));
+        jcl.dump(new java.io.File("/home/shane/Projects/jfunc/build/org/apache/java/lang/Object$ProxyPlus0.class"));
         return jcl;
     }
     
