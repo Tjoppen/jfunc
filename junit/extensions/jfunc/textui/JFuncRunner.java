@@ -3,7 +3,7 @@ package junit.extensions.jfunc.textui;
 import java.lang.reflect.*;
 import java.text.NumberFormat;
 import java.util.*;
-import java.io.PrintStream;
+import java.io.*;
 
 import junit.framework.*;
 import junit.runner.*;
@@ -30,7 +30,9 @@ import junit.extensions.jfunc.runner.BaseTestRunner;
  */
 public class JFuncRunner extends BaseTestRunner {
     PrintStream fWriter= System.out;
-    private boolean verbose = false;
+    private Boolean verbose = null;
+    private Boolean color = null;
+
     /**
      * Constructs a TestRunner.
      */
@@ -64,7 +66,7 @@ public class JFuncRunner extends BaseTestRunner {
         
     public TestResult doRun(Test suite, boolean wait) {
         TestResult result= createTestResult();
-        if (verbose) 
+        if (beVerbose()) 
             result.addListener(new VerboseListener());
         else
             result.addListener(new StatusListener());
@@ -73,6 +75,7 @@ public class JFuncRunner extends BaseTestRunner {
         long endTime= System.currentTimeMillis();
         long runTime= endTime-startTime;
         writer().println();
+
         writer().println("Time: "+elapsedTimeAsString(runTime));
         print(result);
 
@@ -93,13 +96,32 @@ public class JFuncRunner extends BaseTestRunner {
         }
     }
 
+    public boolean useColor() {
+        if (color != null) {
+            return color.booleanValue();
+        }
+        return "true".equals(getPreference("jfunc.color"));
+    }
+
+    public boolean beVerbose() {
+        if (verbose != null) {
+            return verbose.booleanValue();
+        }
+        return "true".equals(getPreference("jfunc.verbose"));
+    }
+
     // <AssertListener> 
 
     class StatusListener implements AssertListener {
         int fColumn= 0;
+        ColorWriter out = new ColorWriter(writer());
+
+        public StatusListener() {
+            out.enableColor(useColor());
+        }
 
         public synchronized void startTest(Test test) {
-            writer().print(".");
+            status(ColorWriter.GREEN, ".");
             if (fColumn++ >= 40) {
                 writer().println();
                 fColumn= 0;
@@ -114,20 +136,26 @@ public class JFuncRunner extends BaseTestRunner {
         }
 
         public synchronized void addError(Test test, Throwable t) {
-            writer().print("E");
+            status(ColorWriter.YELLOW, "E");
         }
         
         public synchronized void addFailure(Test test, AssertionFailedError t) {
-            writer().print("F");
+            status(ColorWriter.RED, "F");
         }
 
+        private void status(int color, String msg ) {
+            out.setColor(color);
+            out.print(msg);
+            out.setColor(ColorWriter.DEFAULT);
+            out.flush();
+        }
     }
 
     class VerboseListener implements AssertListener {
-        ColorWriter out;
+        ColorWriter out = new ColorWriter(writer());
 
         public VerboseListener() {
-            out = new ColorWriter(System.out);
+            out.enableColor(useColor());
         }
 
         public void startTest(Test test) {
@@ -175,7 +203,6 @@ public class JFuncRunner extends BaseTestRunner {
             out.print(" " + msg);
             out.println(" ]");
         }
-        
     }
     // </AssertListener> 
 
@@ -294,20 +321,26 @@ public class JFuncRunner extends BaseTestRunner {
                 testArgs.add(args[i]);
                 continue;
             }
-            if (args[i].equals("-wait"))
+            if (args[i].equals("--wait"))
                 wait= true;
             else if (args[i].equals("-c")) 
                 testCase= extractClassName(args[++i]);
-            else if (args[i].equals("-version"))
+            else if (args[i].equals("--version"))
                 System.err.println("JUnit "+Version.id()+" by Kent Beck and Erich Gamma (modified by Shane Celis)");
-            else if (args[i].equals("-v")) 
-                verbose = true;
+            else if (args[i].equals("-v") || args[i].equals("--verbose")) 
+                verbose = new Boolean(true);
+            else if (args[i].equals("--color"))
+                color = new Boolean(true);
             else
                 testCase= args[i];
         }
                 
-        if (testCase.equals("")) 
-            throw new Exception("usage: jfuncrunner [-wait] testCaseName [args]");
+        if (testCase.equals("")) {
+            throw new Exception("usage: jfuncrunner [-wait] testCaseName [args]\n"
+                                + "  --version   display version\n" 
+                                + "  -v          be verbose\n"
+                                + "  --color     display ANSI colors");
+        }
 
         try {
             Test suite= getTest(testCase, 
