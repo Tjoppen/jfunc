@@ -1,0 +1,142 @@
+<!--?php
+// Default Web Page for groups that haven't setup their page yet
+// Please replace this file with your own website
+//
+// $Id: index.html,v 1.1 2002/04/22 07:33:36 semios Exp $
+//
+$headers = getallheaders();
+?-->
+<HTML>
+<HEAD>
+<TITLE>JFunc: JUnit Functional Testing Extension</TITLE>
+<LINK rel="stylesheet" href="http://sourceforge.net/sourceforge.css" type="text/css">
+</HEAD>
+
+<BODY bgcolor=#FFFFFF topmargin="0" bottommargin="0" leftmargin="0" rightmargin="0" marginheight="0" marginwidth="0">
+
+<!-- top strip -->
+<TABLE width="100%" border=0 cellspacing=0 cellpadding=2 bgcolor="737b9c">
+  <TR>
+    <TD><SPAN class=maintitlebar>&nbsp;&nbsp;
+      <A class=maintitlebar href="http://jfunc.sourceforge.net/"><B>Home</B></A> | 
+      <A class=maintitlebar href="http://sourceforge.net/projects/jfunc"><B>Project</B></A> | 
+      <A class=maintitlebar href="http://jfunc.sourceforge.net/examples.html"><B>Examples</B></a> |
+      <A class=maintitlebar href="http://sourceforge.net/contact.php"><B>Download</B></A></SPAN></TD>
+    </TD>
+  </TR>
+</TABLE>
+<!-- end top strip -->
+
+<!-- top title table -->
+<TABLE width="100%" border=0 cellspacing=0 cellpadding=0 bgcolor="" valign="center">
+  <TR valign="top" bgcolor="#eeeef8">
+    <TD>
+      <A href="http://sourceforge.net/"><IMG src="http://sourceforge.net/images/sflogo2-steel.png" vspace="0" border=0 width="143" height="70"></A>
+    </TD>
+    <TD width="99%"><!-- right of logo -->
+      <a href="http://www.valinux.com"><IMG src="http://sourceforge.net/images/va-btn-small-light.png" align="right" alt="VA Linux Systems" hspace="5" vspace="7" border=0 width="136" height="40"></A>
+    </TD><!-- right of logo -->
+  </TR>
+  <TR><TD bgcolor="#543a48" colspan=2><IMG src="http://sourceforge.net/images/blank.gif" height=2 vspace=0></TD></TR>
+</TABLE>
+<!-- end top title table -->
+
+<!-- center table -->
+<TABLE width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#FFFFFF" align="center">
+  <TR>
+    <TD>
+      <BR>
+<h1>JFunc: JUnit Functional Testing Extension</h1>
+
+<h3>What is JFunc?</h3>
+
+<p>JFunc is an extension to the <a href="http://junit.org">JUnit</a>
+testing framework to make it easier for use with functional tests.
+Functional testing (also called integration testing) significantly
+differs from unit testing in a number of respects.  Part of this
+project is dedicated towards putting together code to address these
+differences; the other part of this project is putting together
+methodologies for functional testing.
+
+<h3>What is functional testing?</h3>
+
+<p>Functional testing, or integration testing, is testing concerned
+with the entire system, not just small pieces (or units) of code.  For
+those interesting in unit testing, <a
+href="http://junit.org">JUnit</a> is currently the premiere unit
+testing framework for Java software.
+
+<h3>Who is this intended for?</h3>
+
+<p>This project is primarily intended for people developing functional
+tests, however, I have seen many people doing unit testing ask for the
+kind of functionality that JFunc provides.
+
+<h3>Are you doing functional testing?</h3>
+
+<p>Sometimes it's difficult to ascertain what kind of testing you're
+doing.  If you're unsure, try asking yourself these questions:
+
+<ol>
+	<li>Is the sequence that your tests run in important? </li>
+	<li>Do you need/want more output than "..F.E"?</li>
+	<li>Are you struggling with fixtures when what you really want is variables?</li>
+	<li>Do you need to prepare your suites by hand?  (i.e. can't rely on your test suite to be dynamically generated.)</li>
+</ol>
+
+<p>If you answered yes to any of the preceding you may be doing some
+sort of functional testing.  Even if you're decidedly not doing
+functional testing and you answered yes to some, you may want to use
+some of JFunc's functionality in your own unit testing.
+
+<h3>What features does JFunc provide?</h3>
+
+<p>The current features that JFunc has to offer are the following:
+
+<ul>
+	<li>Multiple failures (<a href="examples.html#failures">examples</a>)</li>
+
+	<li>Easing the pains of Manual Suite Construction 
+	<ul>
+		<li>Concise, typesafe, suite construction using proxies(<a href="examples.html#manual">examples</a>)</li>
+		<li>Use one test object for a series of tests, rather than the
+one test instance per test (<a href="examples.html#onetest">examples</a>)</li>
+		<li>Test methods can accept arguments (<a href="examples.html#manual">see manual example</a>)</li>
+	</ul>
+	</li>
+	<!-- this is a little more experimental than I'm ready to divulge yet -->
+	<!--li>Run a test using a proxy (thereby eliminating a suite altogether)</li-->
+	<li>Enhanced Test Runner
+	<ul>
+		<li>Verbose assertions (<a href="examples.html#verbose">examples</a>)</li>
+		<li>Pass arguments to tests on the CLI (<a href="examples.html#cliargs">examples</a>)</li>
+	</ul>
+	</li>
+</ul>
+
+<h3>Who supports this extension?</h3>
+
+<p>This framework was developed by Shane Celis and is supported by <a
+href="http://www.terraspring.com">Terraspring, Inc.</a> This framework
+has been used extensively in the development and testing of
+Terraspring's product.  We hope people gain as much from the software
+we're releasing as we've received from other Open Source software.  <br>
+
+    </TD>
+  </TR>
+</TABLE>
+<!-- end center table -->
+
+<!-- footer table -->
+<TABLE width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="737b9c">
+  <TR>
+    <TD align="center"><FONT color="#ffffff"><SPAN class="titlebar">
+      All trademarks and copyrights on this page are properties of their respective owners. Forum comments are owned by the poster. The rest is copyright ©1999-2000 VA Linux Systems, Inc.</SPAN></FONT>
+    </TD>
+  </TR>
+</TABLE>
+
+<!-- end footer table -->
+</BODY>
+</HTML>
+

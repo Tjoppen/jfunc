@@ -1,0 +1,346 @@
+<HTML>
+<HEAD>
+<title>JFunc: Examples</title>
+
+<LINK rel="stylesheet" href="http://sourceforge.net/sourceforge.css" type="text/css">
+</HEAD>
+
+<BODY bgcolor=#FFFFFF topmargin="0" bottommargin="0" leftmargin="0" rightmargin="0" marginheight="0" marginwidth="0">
+
+<!-- top strip -->
+<TABLE width="100%" border=0 cellspacing=0 cellpadding=2 bgcolor="737b9c">
+  <TR>
+    <TD><SPAN class=maintitlebar>&nbsp;&nbsp;
+      <A class=maintitlebar href="http://jfunc.sourceforge.net/"><B>Home</B></A> | 
+      <A class=maintitlebar href="http://sourceforge.net/projects/jfunc"><B>Project</B></A> | 
+      <A class=maintitlebar href="http://jfunc.sourceforge.net/examples.html"><B>Examples</B></a> |
+      <A class=maintitlebar href="http://sourceforge.net/contact.php"><B>Download</B></A></SPAN></TD>
+    </TD>
+  </TR>
+</TABLE>
+<!-- end top strip -->
+
+<!-- top title table -->
+<TABLE width="100%" border=0 cellspacing=0 cellpadding=0 bgcolor="" valign="center">
+  <TR valign="top" bgcolor="#eeeef8">
+    <TD>
+      <A href="http://sourceforge.net/"><IMG src="http://sourceforge.net/images/sflogo2-steel.png" vspace="0" border=0 width="143" height="70"></A>
+    </TD>
+    <TD width="99%"><!-- right of logo -->
+      <a href="http://www.valinux.com"><IMG src="http://sourceforge.net/images/va-btn-small-light.png" align="right" alt="VA Linux Systems" hspace="5" vspace="7" border=0 width="136" height="40"></A>
+    </TD><!-- right of logo -->
+  </TR>
+  <TR><TD bgcolor="#543a48" colspan=2><IMG src="http://sourceforge.net/images/blank.gif" height=2 vspace=0></TD></TR>
+</TABLE>
+<!-- end top title table -->
+
+<!-- center table -->
+<TABLE width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="#FFFFFF"
+> <!--align="center"-->
+  <TR>
+    <TD>
+      <BR>
+<h1 align="center">JFunc: Examples</h1>
+
+<a name="failures"><h2>Multiple Failures</h2></a>
+
+<p>One of the things which perturbed me regarding JUnit was the fact
+that I couldn't allow a test to continue running once a failure had
+occurred within that test.  In JUnit all failures are "fatal" to the
+test.  In JFunc you can choose between failures being "fatal" or
+"non-fatal".  To illustrate this here's what the test code looks like:
+<blockquote><pre>
+public SimpleTest(String name) {
+    super(name);
+    setFatal(false); // use non-fatal asserts
+}
+public void testMultipleFailures() {
+    fail("failing once");
+    fail("failing twice");
+    fail("failing once again");
+}
+</pre></blockquote>
+
+<p>Running JFunc's test runner presents the following results:
+<p>  
+<table border="0">
+<tr>
+   <td bgcolor="#00000" >
+<blockquote><pre><font color="#FFFFFF">
+$ java -cp jfunc.jar:junit.jar junit.extensions.jfunc.textui.JFuncRunner \
+--color junit.extensions.jfunc.samples.SimpleTest testMultipleFailures
+<font color="#00FF00">.</font><font color="#FF0000">FFF</font>
+Time: 0.022
+There were 3 failures:
+1) SimpleTest.testMultipleFailures() failing once
+2) SimpleTest.testMultipleFailures() failing twice
+3) SimpleTest.testMultipleFailures() failing once again
+
+FAILURES!!!
+Tests run: 1,  Failures: 3,  Errors: 0
+
+</font></pre></blockquote>
+   </td>
+</tr></table>
+
+<p>Do note that the familiar status line "Tests run: x, Failures: y,
+Errors: z" will no longer retain the familiar property x >= y + z.  And
+yes those colors will present themselves on the terminal, if you use
+the '--color' option or you place 'jfunc.color=true' in your JUnit
+preferences file.
+
+<hr>
+
+<a name="manual"><h2>Manual Suite Construction</h2></a>
+
+<p>Most unit testing can rely on the test suite to be dynamically
+generated, in functional testing this is almost never the case.  I'll
+first demonstrate the standard means of constructing a suite, both
+typesafe and not typesafe, and then demonstrate how proxies can make
+this easier and provide more features.
+
+<p>These three pieces of code should illustrate the difference.  
+
+<p><b>Example 1.</b> Old Style (not typesafe):
+
+<blockquote><code><pre>
+TestSuite suite = new TestSuite();
+// this may break at runtime in the event any of these methods change
+suite.addTest(new SuiteConstruction("testPassed"));
+suite.addTest(new SuiteConstruction("testFailed"));
+suite.addTest(new SuiteConstruction("testErrored"));
+// can't give arguments to a test using this method
+//suite.addTest(new SuiteConstruction("testWithArgs"));
+return suite;
+</pre></code></blockquote>
+
+<p><b>Example 2.</b> Old Style (typesafe):
+<blockquote><code><pre>
+TestSuite suite = new TestSuite();
+suite.addTest(new SuiteConstruction("passed") {
+        protected void runTest() { testPassed(); }
+     });
+suite.addTest(new SuiteConstruction("failed") {
+        protected void runTest() { testFailed(); }
+     });
+suite.addTest(new SuiteConstruction("errored") {
+        protected void runTest() { testErrored(); }
+     });
+suite.addTest(new SuiteConstruction("args") {
+        protected void runTest() { testWithArgs(new Object()); }
+     });
+return suite;
+</pre></code></blockquote>
+<p><b>Example 3.</b> New Style:
+ 
+<blockquote><code><pre>
+JFuncSuite suite = new JFuncSuite();
+SuiteConstruction test = new SuiteConstruction();
+test = (SuiteConstruction) suite.getTestProxy(test);
+test.testPassed();
+test.testFailed();
+test.testErrored();
+test.testWithArgs(new Object());
+return suite;
+</pre></code></blockquote>
+
+<p>Examples 2 and 3 are effectively the same (example 1 is not,
+because it can not provide arguments to the test).  Example 3 is
+easier to read in my opinion, and more concise.  If you were to
+compare the example 1 against example 3, an advantage is more checks
+happen at compile time (where example 1 could be easily broken by
+changes in the method names, and you wouldn't know about it until it
+runtime).  Also the new style allows for one to optionally choose between
+one test instance per test (default JUnit behavior) or one test
+instance for all tests (meaning you can now use those class variables
+without having to make them static).  See <a href="#onetest">below</a> for an example.
+
+<p>All the examples can be found in the source code under 
+junit/extensions/jfunc/samples/SuiteConstruction.java
+
+<hr>
+<a name="onetest"><h2>One Test Instance</h2></a>
+
+<p>In functional testing, you may find that a lot of information
+necessary to run the test isn't available until the test is actually
+running.  Fixtures are not really applicable to this sort of testing.
+What you really want in this case is member variables which the
+JFunc suite allows for.  
+
+<blockquote><code><pre>
+    private boolean sharing = false; // member variable
+
+    public void testSharing() {
+        assert("sharing should always should start out false", sharing == false);
+        sharing = true;
+    }
+</pre></code></blockquote>
+
+<p>In JUnit this code will always fail because every test is a different
+instance of that test, therefore you can't share member variables.
+This is a good thing in unit testing, since you want your unit tests
+to stand alone and not interfere with each other.  In functionality
+testing though, I don't think you can get away with this.  More often
+then not you end up with static member variables in an attempt to pass
+variables between the classes.</p>
+
+<table border="0">
+<tr>
+   <td bgcolor="#00000" >
+<blockquote><pre><font color="#FFFFFF">
+
+$ java -cp jfunc.jar:junit.jar junit.extensions.jfunc.textui.JFuncRunner \
+ -v --color junit.extensions.jfunc.samples.SuiteConstruction sharing
+<font color="#00FF00">..</font><font color="#FF0000">F</font>
+Time: 0.018
+There was 1 failure:
+1) SuiteConstruction.testSharing() sharing should always should start out false
+
+FAILURES!!!
+Tests run: 2,  Failures: 1,  Errors: 0
+</font></pre></blockquote>
+   </td>
+</tr></table>
+
+<hr>
+<a name="runner"><h2>Enhanced Test Runner</h2</a>
+
+<p>JFunc's test runner has been enhanced in a few ways, that aren't
+immediately noticeable when you first use it.  This was intentional,
+as I want JFunc to behave exactly like JUnit unless you opt-in to use
+some of JFunc's features.  
+
+<blockquote><code><pre>
+usage: jfuncrunner [--wait] [-v] [--color] testCaseName [args]
+  --version   display version
+  --wait      wait between tests
+  -v          be verbose (show verbose assertions)
+  --color     display ANSI colors
+</pre></code></blockquote>
+
+<p>Verbose assertions are described <a href="#verbose">below</a>.
+Arguments can be passed to a test now also described <a
+href="#cliargs">below</a>.
+
+<p>The color feature was added just to keep in sync with the JUnit mantra, "keep the bar green to keep the code clean..."
+
+<hr>
+<a name="verbose"><h2>Verbose Assertions</h2></a>
+
+<p>When using JUnit for functional testing there are often times where
+you want more reporting than "..F.E".  Sometimes you want your tool to
+actually report not only on the failures, but also on the tests that
+have passed.  This is another area where functional testing and unit
+testing have their differences.  In unit testing it is mainly the
+developer who is going to be using test runner and other associated
+tools.  In functional testing, however, sometimes the tests may be
+employed by QA or other people who aren't intimately familiar with the
+code, and terseness is something you want to avoid.  Basically, you
+want to be able to display what it is that you're testing.  That's the
+reasoning behind the verbose assertions anyhow.
+
+<p>Here's a snippet of code from SimpleTest:
+
+<blockquote><code><pre>
+public void testVerboseAssertions() {
+    // first arg is a description of the comparison
+    // second arg is the expected value
+    // third arg is the actual value
+    vassert("good old numbers", 1, 1);
+    vassert("good old numbers", 3, 1);
+    vassert("good old strings", "hi", "hi");
+    vassert("good old strings", "hi", "bye");
+    // first arg is the passed message
+    // second arg is the failed message
+    // third arg is condition (true = passed, false = failed)
+    vassert("Found some similarities", "No similarities found", true);
+    vassert("Found some similarities", "No similarities found", false);
+}
+</pre></code></blockquote>
+
+<p>Running JFunc's test runner presents the following results:
+<p>  
+<table border="0">
+<tr>
+   <td bgcolor="#00000" >
+<blockquote><pre><font color="#FFFFFF">
+
+$ java -cp jfunc.jar:junit.jar junit.extensions.jfunc.textui.JFuncRunner \
+ -v --color junit.extensions.jfunc.samples.SimpleTest testVerboseAssertions
+SimpleTest.testVerboseAssertions(): 
+  [ <font color="#00FF00">PASSED</font> good old numbers: EXPECTED(1) ACTUAL(1) ]
+  [ <font color="#FF0000">FAILED</font> good old numbers: EXPECTED(3) ACTUAL(1) ]
+  [ <font color="#00FF00">PASSED</font> good old strings: EXPECTED(hi) ACTUAL(hi) ]
+  [ <font color="#FF0000">FAILED</font> good old strings: EXPECTED(hi) ACTUAL(bye) ]
+  [ <font color="#00FF00">PASSED</font> Found some similarities ]
+  [ <font color="#FF0000">FAILED</font> No similarities found ]
+
+Time: 0.044
+There were 3 failures:
+1) SimpleTest.testVerboseAssertions() good old numbers: EXPECTED(3) ACTUAL(1)
+2) SimpleTest.testVerboseAssertions() good old strings: EXPECTED(hi) ACTUAL(bye)
+3) SimpleTest.testVerboseAssertions() No similarities found
+
+FAILURES!!!
+Tests run: 1,  Failures: 3,  Errors: 0
+
+</font></pre></blockquote>
+   </td>
+</tr></table>
+
+<p>Notice that two options are given to the test runner.  The '-v'
+option displays verbose assertions, if it were left out you'd get
+".FFF".  And there is also the color option which just makes the term
+easier to read.
+<hr>
+
+<a name="cliargs"><h2>Pass Arguments to the Suite Constructor</h2></a>
+
+<p>JFunc's test runner allows for you to pass arguments to your suite
+constructor.  It allows you to specify the following suite
+constructor:
+
+<blockquote><code><pre>
+public static Test suite(String[] args) throws UsageException {
+    // body
+}
+</pre></code></blockquote>
+
+<p>SimpleTest makes use of this functionality to run only one of it's
+tests:
+
+<blockquote><code><pre>
+public static Test suite(String[] args) throws UsageException {
+    return new SimpleTest(args[0]);
+}
+</pre></code></blockquote>
+
+<p>You may have noticed this in some of the preceding examples.
+However, it is backwards compatible with the old suite constructor,
+which is used if no arguments are given.  
+
+<p>If you're wondering how this could be useful, you probably don't
+need this functionality.
+
+    </TD>
+  </TR>
+</TABLE>
+<!-- end center table -->
+
+<!-- footer table -->
+<TABLE width="100%" border="0" cellspacing="0" cellpadding="2" bgcolor="737b9c">
+  <TR>
+    <TD align="center"><FONT color="#ffffff"><SPAN class="titlebar">
+      All trademarks and copyrights on this page are properties of their respective owners. Forum comments are owned by the poster. The rest is copyright 1999-2000 VA Linux Systems, Inc.</SPAN></FONT>
+    </TD>
+  </TR>
+</TABLE>
+
+<!-- end footer table -->
+</BODY>
+</HTML>
+
+
+
+
+
