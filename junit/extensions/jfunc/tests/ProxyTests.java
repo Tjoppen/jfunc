@@ -12,97 +12,97 @@ public class ProxyTests extends TestCase {
         super(name);
     }
 
-//      public void blahtestObjectProxy() throws Throwable {
-//          Object vector = (Object)Enhancer.enhance(
-//                                                   Object.class,
-//                                                   new Class[]{},
-                                                 
-//                                                   new InvocationHandler(){
- 
-//           public Object invoke( Object obj,java.lang.reflect.Method method,
-//                                       Object args[] )
-//               throws java.lang.Throwable{
-//               System.out.println(method);
-//               return null;
-//           }
-//          });
-//          vector.toString();
-//      }
-
-    public void testObjectInterceptor() throws Throwable {
-        Object object = (Object)Enhancer.enhance(
-                                                 Object.class,
+    public void testUnproxiable() throws Exception {
+        Method method = Object.class.getMethod("toString",
+                                               new Class[] {});
+        Object object = (Object)ProxyPlus.newProxyInstance(
                                                  new Class[]{},
-                                                 
-                                                 new MethodInterceptor(){
-                                                         
-        public Object invoke( Object obj,java.lang.reflect.Method method,
-                                     Object args[]/*, Object retValFromBefore*/ )
-             throws java.lang.Throwable{
-            System.err.println("InvocationHandler.invoke()");
-             return null;
-         }
-
-         public boolean invokeSuper( Object obj,java.lang.reflect.Method method,
-                                     Object args[]/*, Object retValFromBefore*/ )
-             throws java.lang.Throwable{
-            System.err.println("MethodInterceptor.invokeSuper()");
-             return false;
-         }
-                                                         
-                                                         
-         public Object afterReturn(  Object obj,     
-                                     java.lang.reflect.Method method,
-                                     Object args[],  
-                                     /*Object retValFromBefore,*/
-                                     boolean invokedSuper, 
-                                     Object retValFromSuper,
-                                     java.lang.Throwable e )
-             throws java.lang.Throwable{
-             System.err.println("MethodInterceptor.afterReturn()");
-             System.out.println(method);
-             return retValFromSuper;//return the same as supper
-         }
-                                                         
-     });
+                                                 Unproxiable.class,
+                                                 new Handler(method));
         object.toString();
     }
 
-//      public void blahtestVectorProxy() throws Throwable {
-//          Vector vector = (Vector)Enhancer.enhance(
-//                                                   Vector.class,
-//                                                   new Class[]{List.class},
-                                                 
-//                                                   new InvocationHandler(){
- 
-//           public Object invoke( Object obj,java.lang.reflect.Method method,
-//                                       Object args[] )
-//               throws java.lang.Throwable{
-//               System.out.println(method);
-//               return null;
-//           }
-                                                         
-//  //           public boolean invokeSuper( Object obj,java.lang.reflect.Method method,
-//  //                                       Object args[]/*, Object retValFromBefore*/ )
-//  //               throws java.lang.Throwable{
-//  //               return true;
-//  //           }
-                                                         
-                                                         
-//  //           public Object afterReturn(  Object obj,     
-//  //                                       java.lang.reflect.Method method,
-//  //                                       Object args[],  
-//  //                                       /*Object retValFromBefore,*/
-//  //                                       boolean invokedSuper, 
-//  //                                       Object retValFromSuper,
-//  //                                       java.lang.Throwable e )
-//  //               throws java.lang.Throwable{
-//  //               System.out.println(method);
-//  //               return retValFromSuper;//return the same as supper
-//  //           }
-                                                         
-//       });
-//          vector.add(new Object());
-        
-//      }
+    public void testObjectProxy() throws Exception {
+        Method method = Object.class.getMethod("toString",
+                                               new Class[] {});
+        Object object = (Object)ProxyPlus.newProxyInstance(
+                                                 new Class[]{},
+                                                 Object.class,
+                                                 new Handler(method));
+        object.toString();
+    }
+
+    public void testVectorProxy() throws Exception {
+        Object added = new Object();
+        Method method = Vector.class.getMethod("add",
+                                               new Class[] {
+                                                   Object.class
+                                               });
+        Vector object = (Vector)ProxyPlus.newProxyInstance(
+                                                 new Class[]{},
+                                                 Vector.class,
+                                                 new Handler(method, 
+                                                             new Object[] {
+                                                                 added }));
+        object.add(added);
+        //object.add(new Object()); // should fail
+        //object.remove(added); // should fail
+    }
+
+    public void testIsProxy() throws Exception {
+        testIsProxy(Vector.class);
+    }
+
+    public void testIsProxy(Class cl) throws Exception {
+        Class proxy = ProxyPlus.getProxyClass(new Class[] {},
+                                              cl);
+        assertNotNull("proxy is null", proxy);
+        assertTrue("proxy isn't recognized", 
+                   ProxyPlus.isProxyPlusClass(proxy));
+        assertTrue("proxy shouldn't be recognized", 
+                   !ProxyPlus.isProxyClass(proxy));
+    }
+
+    class Unproxiable {
+        private Unproxiable() { }
+    }
+    
+    class Handler extends Assert implements InvocationHandler {
+        public Method expectedMethod;
+        public Object[] expectedArgs;
+
+        public Handler(Method method) {
+            this.expectedMethod = method;
+        }
+
+        public Handler(Method method, Object[] args) {
+            this.expectedMethod = method;
+            this.expectedArgs = args;
+        }
+
+        public Handler() { }
+
+        public Object invoke( Object obj,
+                              Method method,
+                              Object args[])
+            throws java.lang.Throwable{
+            // you can get yourself into trouble here... 
+            // calling obj.toString() will cause a bus error or stack overflow
+            assertNotNull(obj);
+            assertNotNull(method);
+            assertNotNull(args);
+            if (expectedMethod != null) 
+                assertEquals("method incorrect", expectedMethod, method);
+            if (expectedArgs != null) {
+                for(int i = 0; i < expectedArgs.length; i++) {
+                    assertTrue("args incorrect", expectedArgs[i] == args[i]);
+                }
+            }
+//              System.err.println("InvocationHandler.invoke("  +obj.getClass() + 
+//                                 ", " + method + "," + args + ")");
+            
+            //throw new Exception("hah");
+            return null;
+        }
+    }
 }
