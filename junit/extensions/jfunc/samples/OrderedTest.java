@@ -24,7 +24,7 @@ public class OrderedTest extends JFuncTestCase {
     public static Test suite() throws Exception {
         JFuncSuite suite = new JFuncSuite();
         OrderedTest test = new OrderedTest();
-        suite.oneInstancePerTest(false);
+        suite.oneTest(true);
         test = (OrderedTest) suite.getTestProxy(test);
         test.firstTest();
         test.secondTest();

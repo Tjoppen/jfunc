@@ -12,18 +12,18 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationHandler;
 
-/*
- * XXX The second is a proxy of a test object, that unlike the
- * JFuncTestSuite that creates a suite, the JFuncTestResult.
- */
 /**
- * JFuncTestResult passes verbose assertions to the
- * <code>AssertListener</code>.  And also allows for tests to run
+ * JFuncResult main function is to pass verbose assertions to the
+ * <code>AssertListener</code>s.  
+ *
+ * <p>Another more experimental feature is it allows tests to run
  * without a suite through a proxy mechanism.  Since these tests are
  * running "live", the result of the test can be passed back
- * immediately, which is useful in cases where you might only run test
- * B if test A passes.
+ * immediately, which is useful in cases where you might run test B
+ * only if test A passes, or other more complicated situations that
+ * come up during functional testing.
  * 
+ * @see AssertListener
  * @author Shane Celis <shane@terraspring.com>
  **/
 public class JFuncResult extends TestResult implements AssertListener {
@@ -63,7 +63,11 @@ public class JFuncResult extends TestResult implements AssertListener {
 //      }
         
 
-    public Test getTestProxy(Test test) throws InstantiationException {
+    /**
+     * Returns a proxy of the test that will actually be run when
+     * called.
+     **/
+    public Test getTestProxy(Test test) {
         InvocationHandler handler = new RunningTestProxy(this, test);
         Class cl = test.getClass();
 
@@ -78,9 +82,9 @@ public class JFuncResult extends TestResult implements AssertListener {
                                      new Class[] { InvocationHandler.class });
             return (Test) cons.newInstance(new Object[] { handler });
         } catch (InstantiationException ie) {
-            throw ie;
+            throw new RuntimeException(ie.toString());
         } catch (Exception e) {
-            throw new InstantiationException(e.toString());
+            throw new RuntimeException(e.toString());
         }
         
 //      return (Test) ProxyPlus.newProxyInstance(

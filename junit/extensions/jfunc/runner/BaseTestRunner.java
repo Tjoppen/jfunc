@@ -46,43 +46,58 @@ public abstract class BaseTestRunner {
             return null;
         }
         Method suiteMethod= null;
-        boolean canAcceptArgs = false;
+        Method suiteMethodWithArgs= null;
         try {
-            suiteMethod= testClass.getMethod(SUITE_METHODNAME, 
+            suiteMethodWithArgs= testClass.getMethod(SUITE_METHODNAME, 
                                              new Class[] { args.getClass() });
-            canAcceptArgs = true;
         } catch(Exception e) {
             // try to extract a test suite automatically
             clearStatus();                  
-            if (args.length != 0) {
-                runFailed("suite doesn't accept arguments");
-            }
             //return new TestSuite(testClass);
         }
         try {
-            suiteMethod= testClass.getMethod(SUITE_METHODNAME, new Class[0]);
+                suiteMethod= testClass.getMethod(SUITE_METHODNAME, new Class[0]);
         } catch(Exception e) {
             // try to extract a test suite automatically
             clearStatus();                  
-            if (args.length == 0 && canAcceptArgs) {
+            if (args.length == 0 && suiteMethodWithArgs != null) {
                 runFailed("suite needs arguments");
             }
-            return new TestSuite(testClass);
+            if (suiteMethodWithArgs == null) 
+                return new TestSuite(testClass);
         }
         Test test= null;
+        if (args.length != 0 && suiteMethodWithArgs == null) {
+            runFailed("suite doesn't accept arguments");
+        }
         try {
-            test= (Test)suiteMethod.invoke(null, new Class[0]); // static method
+            if (args.length != 0 && suiteMethodWithArgs != null) {
+                // use arguments with the suite
+                test= (Test)suiteMethodWithArgs.invoke(null, new Object[] { args }); 
+            } else {
+                // static method
+                test= (Test)suiteMethod.invoke(null, new Class[0]); 
+            }
             if (test == null)
                 return test;
-        } 
-        catch (InvocationTargetException e) {
-            runFailed("Failed to invoke suite():" + e.getTargetException().toString());
-            return null;
+        } catch (InvocationTargetException ite) {
+            Throwable t = ite.getTargetException();
+            if (t instanceof UsageException) {
+                runFailed(t.getMessage());
+            } else {
+                t.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        catch (IllegalAccessException e) {
-            runFailed("Failed to invoke suite():" + e.toString());
-            return null;
-        }
+//          catch (InvocationTargetException e) {
+//              runFailed("Failed to invoke suite():" + e.getTargetException().toString());
+//              return null;
+//          }
+//          catch (IllegalAccessException e) {
+//              runFailed("Failed to invoke suite():" + e.toString());
+//              return null;
+//          }
                 
         clearStatus();
         return test;

@@ -3,7 +3,9 @@ package junit.extensions.jfunc;
 import junit.framework.*;
 
 /**
- * A set of assert methods that allow for multiple failures.
+ * Basically this is JUnit's Assert made into an instance class,
+ * rather than a static one.  It also provides the necessary methods
+ * to allow for multiple failures.
  *
  * @author Shane Celis <shane@terraspring.com>
  **/
@@ -18,7 +20,7 @@ public class JFuncAssert {
      * The test that will be calling the asserts (usually just
      * <code>this</code>, by virtue of extension a la JFuncTestCase)
      **/
-    private final Test test;
+    private Test test;
 
     /**
      * internal flag to denote whether assertions will be fatal or not
@@ -90,6 +92,14 @@ public class JFuncAssert {
      **/
     public void setResult(TestResult result) {
         this.result = result;
+    }
+
+    /**
+     * Must be set prior to running test, if test is intended to do
+     * non-fatal assertions.
+     **/
+    public void setTest(Test test) {
+        this.test = test;
     }
 
     /**

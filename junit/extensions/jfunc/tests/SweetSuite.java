@@ -65,7 +65,7 @@ public class SweetSuite extends JFuncTestCase {
     public static Test suite() {
         try {
             JFuncSuite suite = new JFuncSuite();
-            suite.oneInstancePerTest(false);
+            suite.oneTest(true);
             SweetSuite realTestInstance = new SweetSuite();
             SweetSuite testProxy = 
                 (SweetSuite) suite.getTestProxy(realTestInstance);

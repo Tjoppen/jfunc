@@ -5,74 +5,14 @@ import junit.framework.*;
 import java.lang.reflect.*;
 
 /**
-// XXX these javadocs need to be re-written
- * A test case defines the fixture to run multiple tests. To define a test case<br>
- * 1) implement a subclass of TestCase<br>
- * 2) define instance variables that store the state of the fixture<br>
- * 3) initialize the fixture state by overriding <code>setUp</code><br>
- * 4) clean-up after a test by overriding <code>tearDown</code>.<br>
- * Each test runs in its own fixture so there
- * can be no side effects among test runs.
- * Here is an example:
- * <pre>
- * public class MathTest extends TestCase {
- *     protected double fValue1;
- *     protected double fValue2;
+ * JFuncTestCase works the same as TestCase for most purposes, but it
+ * uses JFunc's assert classes which allow for other features like
+ * multiple failures and verbose assertions.
  *
- *     public MathTest(String name) {
- *         super(name);
- *     }
- *
- *    protected void setUp() {
- *         fValue1= 2.0;
- *         fValue2= 3.0;
- *     }
- * }
- * </pre>
- *
- * For each test implement a method which interacts
- * with the fixture. Verify the expected results with assertions specified
- * by calling <code>assert</code> with a boolean.
- * <pre>
- *    protected void testAdd() {
- *        double result= fValue1 + fValue2;
- *        assert(result == 5.0);
- *    }
- * </pre>
- * Once the methods are defined you can run them. The framework supports
- * both a static type safe and more dynamic way to run a test.
- * In the static way you override the runTest method and define the method to
- * be invoked. A convenient way to do so is with an anonymous inner class.
- * <pre>
- * Test test= new MathTest("add") {
- *        public void runTest() {
- *            testAdd();
- *        }
- * };
- * test.run();
- * </pre>
- * The dynamic way uses reflection to implement <code>runTest</code>. It dynamically finds
- * and invokes a method.
- * In this case the name of the test case has to correspond to the test method
- * to be run.
- * <pre>
- * Test= new MathTest("testAdd");
- * test.run();
- * </pre>
- * The tests to be run can be collected into a TestSuite. JUnit provides
- * different <i>test runners</i> which can run a test suite and collect the results.
- * A test runner either expects a static method <code>suite</code> as the entry
- * point to get a test to run or it will extract the suite automatically.
- * <pre>
- * public static Test suite() {
- *      suite.addTest(new MathTest("testAdd"));
- *      suite.addTest(new MathTest("testDivideByZero"));
- *      return suite;
- *  }
- * </pre>
+ * @see TestCase
  * @see JFuncResult
- * @see JFuncSuite
- */
+ * @see JFuncSuite 
+ **/
 // We would simply extend TestCase, but we want to use our own
 // non-static Assert class
 public abstract class JFuncTestCase extends VerboseAssert 
@@ -80,14 +20,14 @@ public abstract class JFuncTestCase extends VerboseAssert
     /**
      * the name of the test case
      */
-    private String fName;
+    private String name;
         
     /**
      * No-arg constructor to enable serialization. This method
      * is not intended to be used by mere mortals.
      */
     public JFuncTestCase() {
-        fName= null;
+        name = null;
         // XXX perhaps some fatal flag can be added here to prevent this
         // test from trying to run
     }
@@ -96,7 +36,7 @@ public abstract class JFuncTestCase extends VerboseAssert
      * Constructs a test case with the given name.
      */
     public JFuncTestCase(String name) {
-        fName= name;
+        this.name = name;
     }
         
     /**
@@ -105,6 +45,7 @@ public abstract class JFuncTestCase extends VerboseAssert
     public int countTestCases() {
         return 1;
     }
+
     /**
      * Creates a default TestResult object
      *
@@ -114,13 +55,15 @@ public abstract class JFuncTestCase extends VerboseAssert
         //return new TestResult();
         return new JFuncResult();
     }
+
     /**
      * Gets the name of the test case.
      * @deprecated use getName()
      */
     public String name() {
-        return fName;
+        return name;
     }
+
     /**
      * A convenience method to run this test, collecting the results with a
      * default TestResult object.
@@ -141,13 +84,10 @@ public abstract class JFuncTestCase extends VerboseAssert
         // If it were, we couldn't have arguments to our code anyway
 
         // if we could extend junit.framework.TestCase this code would look like
-        // setResult(result)
-        // super.run(result);
         final JFuncTestCase test = this;
         //if (!isFatal()) 
         setResult(result);  // Assert needs this info to do non-fatal asserts
 
-        //System.err.println("JFuncTestCase.wtf");
         result.startTest(test);
         Protectable p= new Protectable() {
                 public void protect() throws Throwable {
@@ -185,12 +125,12 @@ public abstract class JFuncTestCase extends VerboseAssert
             // methods. getDeclaredMethods returns all
             // methods of this class but excludes the
             // inherited ones.
-            runMethod= getClass().getMethod(fName, null);
+            runMethod= getClass().getMethod(name, null);
         } catch (NoSuchMethodException e) {
-            fail("Method \""+fName+"\" not found");
+            fail("Method \""+name+"\" not found");
         }
         if (!Modifier.isPublic(runMethod.getModifiers())) {
-            fail("Method \""+fName+"\" should be public");
+            fail("Method \""+name+"\" should be public");
         }
 
         try {
@@ -205,22 +145,26 @@ public abstract class JFuncTestCase extends VerboseAssert
             throw e;
         }
     }
+
     /**
      * Sets up the fixture, for example, open a network connection.
      * This method is called before a test is executed.
      */
     protected void setUp() throws Exception {
     }
+
     /**
      * Tears down the fixture, for example, close a network connection.
      * This method is called after a test is executed.
      */
     protected void tearDown() throws Exception {
     }
+
     /**
      * Returns a string representation of the test case
      */
     public String toString() {
+        //System.err.println("JFuncTestCase.toString()");
         return shortName(getClass()) + "." + name()+"()";
     }
 
@@ -231,10 +175,10 @@ public abstract class JFuncTestCase extends VerboseAssert
     
     /**
      * Gets the name of a TestCase
-     * @return returns a String
+     * @return returns a String (may be null in the case where proxies are used)
      */
     public String getName() {
-        return fName;
+        return name;
     }
 
     /**
@@ -242,7 +186,7 @@ public abstract class JFuncTestCase extends VerboseAssert
      * @param name The name to set
      */
     public void setName(String name) {
-        fName= name;
+        this.name = name;
     }
 
 }

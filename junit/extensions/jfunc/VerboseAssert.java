@@ -6,7 +6,7 @@ import junit.framework.AssertionFailedError;
 
 /**
  * VerboseAssert allows for assertions to be displayed even if they
- * failed.  If you've ever tried printing your assertions that have
+ * passed.  If you've ever tried printing your assertions that have
  * passed, you'll quickly realize that all the messages are written to
  * express a failure.  In order to present the tests outcome more
  * naturally, regardless of the outcome of an assert, you need at the
@@ -14,6 +14,10 @@ import junit.framework.AssertionFailedError;
  * failure.  A good place inbetween is a description of what you're
  * comparing, and showing the expected vs. actual.  It is this classes
  * aim to provide both of those things.
+ *
+ * Currently VerboseAssert doesn't cover the wide breadth of objects, or
+ * even the same naming convention (vassertEquals).  I'm resisting filling
+ * it out further until I receive some feedback.
  *
  * @author Shane Celis <shane@terraspring.com>
  **/
@@ -32,6 +36,10 @@ public abstract class VerboseAssert extends JFuncAssert {
     // XXX this causes recursion currently
 //      public void fail(String msg) {
 //          assert(msg, false);
+//      }
+
+//      public void vfail(String msg) {
+//          vassert(msg, false);
 //      }
 
     /*----- Asserts ----------------------------------------------------------*/

@@ -42,8 +42,12 @@ public class TestletWrapper implements Test {
         
     public void run(final TestResult result) {
         result.startTest(this);
-        if (instance instanceof JFuncAssert) 
+        if (instance instanceof JFuncAssert) {
+            // XXX this isn't cool especially if we're running in a multi-threaded
+            // environment.  Need to resolve it somehow.
             ((JFuncAssert)instance).setResult(result);
+            ((JFuncAssert)instance).setTest(this);
+        }
         Protectable p = new Protectable() {
                 public void protect() throws Throwable {
                     runBare(result);
@@ -80,7 +84,7 @@ public class TestletWrapper implements Test {
 
     public static Class getProxy(Class[] interfaces, Class superclass) {
         Class cl = superclass;
-        // Based on JCFE work (doesn't work well)
+        // Based on JCFE work (doesn't work as well)
         return ProxyLoader.getProxyClass(cl.getClassLoader(), interfaces, cl);
 
         // Based on Sun's Proxy code (license issues)

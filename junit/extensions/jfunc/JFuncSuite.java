@@ -14,8 +14,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
 
 /**
- * <p>The ProxyTestSuite uses dynamic proxies for classes to make
- * suite construction in Junit easier and emplore more compile time
+ * <p>The JFuncSuite uses dynamic proxies for classes to make
+ * suite construction in JUnit easier and emplore more compile time
  * checks.  This suite will only be useful to you, if you have to
  * construct your suites by hand.  If you simply allow your suites to
  * be dynamically generated, just keep doing what you've been doing.
@@ -23,30 +23,29 @@ import java.lang.reflect.Constructor;
  * <p>Instead of calling something like this:
  *
  * <blockquote><code><pre>
- * suite.add(new TestTest("testPassed"));
- * suite.add(new TestTest("testFailed"));
- * suite.add(new TestTest("testErrored"));
+ * suite.add(new SimpleTest("testPassed"));
+ * suite.add(new SimpleTest("testFailed"));
+ * suite.add(new SimpleTest("testErrored"));
  * // can't do this with the current TestCase in Junit
- * // suite.add(new TestTest("testArgs", new Object[] { "ugly" }));
+ * // suite.add(new SimpleTest("testWithArgs", new Object[] { "ugly" }));
  * return suite;
  * </pre></code></blockquote>
  *
  * <p>The new code style will look much more javaish:
  *
  * <blockquote><code><pre>
- * TestTest tc = (TestTest) suite.getTestProxy(new TestTest());
+ * SimpleTest tc = (SimpleTest) suite.getTestProxy(new SimpleTest());
  * tc.testPassed();
  * tc.testFailed();
  * tc.testErrored();
  * // TestProxies can accept arguments
- * // tc.testArgs("pretty");
+ * // tc.testWithArgs("pretty");
  * return suite;
  * </pre></code></blockquote>
  *
- * <p>These two pieces of code are effectively the same (except for
- * the testlet that accepts arguments), except one is cleaner, easier
- * to read in my opinion and has more checks that happen at compile
- * time.
+ * <p>These two pieces of code are effectively the same, except one is
+ * cleaner, easier to read in my opinion and has more checks that
+ * happen at compile time.
  *
  * @author Shane Celis <shane@terraspring.com>
  **/
@@ -65,22 +64,30 @@ public class JFuncSuite extends TestSuite {
         super();
     }
 
-    /**
-     * Defaults to regular Junit behavior of one instance of the class
-     * per test (true).  If given a false, however, there will be only
-     * one instance of the test from which various method calls are
-     * made.  This kind of functionality should be used sparingly as
-     * the state of the test object may be important and tests can
+   /**
+     * This kind of functionality should be used sparingly as the
+     * state of the test object may be important and tests can
      * interfere with one anothers data.  (<b>Read:</b> Don't use it
-     * if you can avoid it.)
+     * if you can avoid it.)  Many functional testers will have a hard
+     * time avoiding it, so if you're using static member variables,
+     * this is a better solution.
+     *
+     * @param justOne true will use just one instance of the test
+     * (added JFunc behavior).  false will have the suite use a new
+     * test for every test (default JUnit behavior).
      **/
-    // this needs a better name
-    public void cloneTests(boolean yes) {
-        oneInstancePerTest(yes);
+    public void oneTest(boolean justOne) {
+        manyTests(!justOne);
+        //oneInstancePerTest = !justOne;
     }
 
-    public void oneInstancePerTest(boolean yes) {
-        oneInstancePerTest = yes;
+    /**
+     * @param many true will have the suite use many tests (default JUnit
+     * behavior).  false will use just one instance of the test (added JFunc
+     * behavior).
+     **/
+    public void manyTests(boolean many) {
+        oneInstancePerTest = many;
     }
 
     /**
@@ -88,7 +95,7 @@ public class JFuncSuite extends TestSuite {
      * can be cast to that object.  This facilitates a better means of
      * constructing testcases.  
      **/
-    public Test getTestProxy(Test test) throws InstantiationException {
+    public Test getTestProxy(Test test) {
         // Note that this proxy/invocation handler is now tied to "this" suite.
           InvocationHandler handler = new TestProxy(this, test);
           Class cl = test.getClass();
@@ -107,11 +114,11 @@ public class JFuncSuite extends TestSuite {
                               new Class[] { InvocationHandler.class });
               return (Test) cons.newInstance(new Object[] { handler });
           } catch (InstantiationException ie) {
-              throw ie;
+              throw new RuntimeException(ie.toString());
           } catch (InvocationTargetException ite) {
-              throw new InstantiationException(ite.getTargetException().toString());
+              throw new RuntimeException(ite.getTargetException().toString());
           } catch (Exception e) {
-              throw new InstantiationException(e.toString());
+              throw new RuntimeException(e.toString());
           }
     }
     

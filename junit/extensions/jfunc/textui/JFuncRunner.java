@@ -326,7 +326,7 @@ public class JFuncRunner extends BaseTestRunner {
             else if (args[i].equals("-c")) 
                 testCase= extractClassName(args[++i]);
             else if (args[i].equals("--version"))
-                System.err.println("JUnit "+Version.id()+" by Kent Beck and Erich Gamma (modified by Shane Celis)");
+                System.err.println("JFunc by Shane Celis derived from JUnit "+Version.id()+" by Kent Beck and Erich Gamma");
             else if (args[i].equals("-v") || args[i].equals("--verbose")) 
                 verbose = new Boolean(true);
             else if (args[i].equals("--color"))
@@ -335,10 +335,11 @@ public class JFuncRunner extends BaseTestRunner {
                 testCase= args[i];
         }
                 
-        if (testCase.equals("")) {
-            throw new Exception("usage: jfuncrunner [-wait] testCaseName [args]\n"
+        if (testCase == null) {
+            throw new Exception("usage: jfuncrunner [--wait] [-v] [--color] testCaseName [args]\n"
                                 + "  --version   display version\n" 
-                                + "  -v          be verbose\n"
+                                + "  --wait      wait between tests\n" 
+                                + "  -v          be verbose (show verbose assertions)\n"
                                 + "  --color     display ANSI colors");
         }
 

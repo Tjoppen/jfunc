@@ -37,8 +37,10 @@ public class SimpleTest extends JFuncTestCase {
     }
 
     public void testVerboseAssertions() {
-        vassert("bad new numbers", 1, 1);
+        vassert("good old numbers", 1, 1);
         vassert("good old numbers", 3, 1);
+        vassert("good old strings", "hi", "hi");
+        vassert("good old strings", "hi", "bye");
         vassert("Found some similarities", "No similarities found", true);
         vassert("Found some similarities", "No similarities found", false);
     }
@@ -61,12 +63,18 @@ public class SimpleTest extends JFuncTestCase {
         sharing = true;
     }
 
+    public static Test suite(String[] args) {
+        //System.err.println("using args suite generator");
+        return new SimpleTest(args[0]);
+    }
+
     public void testThrows() {
         throw new RuntimeException("exception message");
     }
 
 
     public static Test suite() {
+        //System.err.println("using arg-less suite constructor");
         // more like type ugly :)
         /*
          * the type safe way

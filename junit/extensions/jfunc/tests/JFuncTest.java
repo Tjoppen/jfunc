@@ -87,7 +87,7 @@ public class JFuncTest extends TestCase {
     public void testNoMemberSharing() throws Exception {
         JFuncSuite suite = new JFuncSuite();
         TestResult result = new TestResult();
-        suite.oneInstancePerTest(true); // default already
+        suite.oneTest(false); // default already
         SimpleTest test = (SimpleTest) suite.getTestProxy(new SimpleTest());
         // create a proxy of SimpleTest to build the suite
         test.testSharing();
@@ -102,7 +102,7 @@ public class JFuncTest extends TestCase {
     public void testMemberSharing() throws Exception {
         JFuncSuite suite = new JFuncSuite();
         TestResult result = new TestResult();
-        suite.oneInstancePerTest(false);
+        suite.oneTest(true);
         SimpleTest test = (SimpleTest) suite.getTestProxy(new SimpleTest());
         // create a proxy of SimpleTest to build the suite
         test.testSharing();
@@ -115,7 +115,6 @@ public class JFuncTest extends TestCase {
     public void testRunningProxies() throws Exception {
         //JFuncSuite suite = new JFuncSuite();
         JFuncResult result = new JFuncResult();
-        //suite.oneInstancePerTest(false);
         SimpleTest test = (SimpleTest) result.getTestProxy(new SimpleTest());
         // create a proxy of SimpleTest to build the suite
         assert(test.testInstantResult(true) == 0);
