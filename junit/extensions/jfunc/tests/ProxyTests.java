@@ -46,6 +46,7 @@ public class ProxyTests extends TestCase {
          public boolean invokeSuper( Object obj,java.lang.reflect.Method method,
                                      Object args[]/*, Object retValFromBefore*/ )
              throws java.lang.Throwable{
+            System.err.println("MethodInterceptor.invokeSuper()");
              return false;
          }
                                                          
@@ -58,6 +59,7 @@ public class ProxyTests extends TestCase {
                                      Object retValFromSuper,
                                      java.lang.Throwable e )
              throws java.lang.Throwable{
+             System.err.println("MethodInterceptor.afterReturn()");
              System.out.println(method);
              return retValFromSuper;//return the same as supper
          }

@@ -95,7 +95,7 @@ import org.apache.bcel.generic.*;
  * </pre>
  *@author     Juozas Baliuka <a href="mailto:baliuka@mwm.lt">
  *      baliuka@mwm.lt</a>
- *@version    $Id: Enhancer.java,v 1.2 2002/06/27 23:43:19 semios Exp $
+ *@version    $Id: Enhancer.java,v 1.3 2002/06/28 00:01:35 semios Exp $
  */
 public class Enhancer implements org.apache.bcel.Constants {
     
@@ -843,7 +843,7 @@ public class Enhancer implements org.apache.bcel.Constants {
         int argCount = types.length;
         addMethodField(fieldName, cg);
         boolean returnsValue = !mg.getReturnType().equals(Type.VOID);
-        boolean abstractM =  Modifier.isAbstract(method.getModifiers());
+        boolean abstractM =  true; //Modifier.isAbstract(method.getModifiers());
         
         InstructionHandle ehEnd = null;
         GOTO gotoHandled = null;
@@ -860,70 +860,70 @@ public class Enhancer implements org.apache.bcel.Constants {
         
         
         //DEFINE LOCAL VARIABLES
-        il.append(new ACONST_NULL());
-        int resultFromSuper = ++loaded;
-        il.append(new ASTORE(resultFromSuper));
-        il.append(new ICONST(0));
-        int superInvoked = ++loaded;
-        il.append(new ISTORE(superInvoked));
-        il.append(new ACONST_NULL());
-        int error = ++loaded;
-        il.append(new ASTORE(error));
+//          il.append(new ACONST_NULL());
+//          int resultFromSuper = ++loaded;
+//          il.append(new ASTORE(resultFromSuper));
+//          il.append(new ICONST(0));
+//          int superInvoked = ++loaded;
+//          il.append(new ISTORE(superInvoked));
+//          il.append(new ACONST_NULL());
+//          int error = ++loaded;
+//          il.append(new ASTORE(error));
         
         // XXX here's the actual code generation for the method goes.
         // This is where we could redirect it to an InvocationHandler.
-        if (!abstractM) { 
-            il.append(new ALOAD(0)); //this.handler
-            il.append(
-            factory.createFieldAccess(
-            cg.getClassName(),
-            FIELD_NAME,
-            new ObjectType(INTERCEPTOR_CLASS),
-            GETFIELD));
+//          if (!abstractM) { 
+//              il.append(new ALOAD(0)); //this.handler
+//              il.append(
+//              factory.createFieldAccess(
+//              cg.getClassName(),
+//              FIELD_NAME,
+//              new ObjectType(INTERCEPTOR_CLASS),
+//              GETFIELD));
             
-            //GENERATE INVOKE SUPER
-            il.append(new ALOAD(0)); //this
-            il.append(factory.createGetStatic(cg.getClassName(), fieldName, METHOD_OBJECT));
-            il.append(new ALOAD(argArray));
-            il.append(new INVOKEINTERFACE(invokeSuper, 4));
+//              //GENERATE INVOKE SUPER
+//              il.append(new ALOAD(0)); //this
+//              il.append(factory.createGetStatic(cg.getClassName(), fieldName, METHOD_OBJECT));
+//              il.append(new ALOAD(argArray));
+//              il.append(new INVOKEINTERFACE(invokeSuper, 4));
             
-            //test returned true
-            ifInvoke = new IFEQ(null);
-            condition = il.append(ifInvoke);
-            il.append(new ICONST(1));
-            ehStart = il.append(new ISTORE(superInvoked)); // Ivoked = true
+//              //test returned true
+//              ifInvoke = new IFEQ(null);
+//              condition = il.append(ifInvoke);
+//              il.append(new ICONST(1));
+//              ehStart = il.append(new ISTORE(superInvoked)); // Ivoked = true
             
-            Instruction wrapper = newWrapper(mg.getReturnType(), cp);
-            if (wrapper != null) {
-                ehStart = il.append(wrapper);
-                il.append(new DUP());
-            }
+//              Instruction wrapper = newWrapper(mg.getReturnType(), cp);
+//              if (wrapper != null) {
+//                  ehStart = il.append(wrapper);
+//                  il.append(new DUP());
+//              }
             
-              invokeSuper(cg, mg, types);
+//                invokeSuper(cg, mg, types);
             
             
-            if (wrapper != null) {
-                il.append(initWrapper(mg.getReturnType(), cp));
-            }
-            if (returnsValue) {
-                ehEnd = il.append(new ASTORE(resultFromSuper));
-            }
-            gotoHandled = new GOTO(null);
-            if (!returnsValue) {
-                ehEnd = il.append(gotoHandled);
-            } else {
-                il.append(gotoHandled);
-            }
-            ehHandled = il.append(new ASTORE(error));
-        }
+//              if (wrapper != null) {
+//                  il.append(initWrapper(mg.getReturnType(), cp));
+//              }
+//              if (returnsValue) {
+//                  ehEnd = il.append(new ASTORE(resultFromSuper));
+//              }
+//              gotoHandled = new GOTO(null);
+//              if (!returnsValue) {
+//                  ehEnd = il.append(gotoHandled);
+//              } else {
+//                  il.append(gotoHandled);
+//              }
+//              ehHandled = il.append(new ASTORE(error));
+//          }
         
-        InstructionHandle endif = il.append(new ALOAD(0)); //this.handler
+          InstructionHandle endif = il.append(new ALOAD(0)); //this.handler
     
-        if (!abstractM) {
+//          if (!abstractM) {
             
-            ifInvoke.setTarget(endif);
-            gotoHandled.setTarget(endif);
-        }
+//              ifInvoke.setTarget(endif);
+//              gotoHandled.setTarget(endif);
+//          }
         
        //------------------------------- 
         il.append(
@@ -948,10 +948,13 @@ public class Enhancer implements org.apache.bcel.Constants {
         
        //GENERATE RETURN VALUE 
         InstructionHandle exitMethod =
-        generateReturnValue(il, factory, cp, mg.getReturnType(), ++loaded);
-        if (!abstractM) {
-            mg.addExceptionHandler(ehStart, ehEnd, ehHandled, Type.THROWABLE);
-        }
+            generateReturnValue(il, factory, cp, mg.getReturnType(), ++loaded);
+//          if (!abstractM) {
+//              mg.addExceptionHandler(ehStart, 
+//                                     ehEnd, 
+//                                     ehHandled, 
+//                                     Type.THROWABLE);
+//          }
         
         mg.setMaxStack();
         mg.setMaxLocals();
