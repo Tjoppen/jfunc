@@ -21,7 +21,7 @@ public abstract class JFuncTestCase extends VerboseAssert
      * the name of the test case
      */
     private String name;
-        
+
     /**
      * No-arg constructor to enable serialization. This method
      * is not intended to be used by mere mortals.
@@ -109,8 +109,7 @@ public abstract class JFuncTestCase extends VerboseAssert
         setUp();
         try {
             runTest();
-        }
-        finally {
+        } finally {
             tearDown();
         }
     }
@@ -125,12 +124,12 @@ public abstract class JFuncTestCase extends VerboseAssert
             // methods. getDeclaredMethods returns all
             // methods of this class but excludes the
             // inherited ones.
-            runMethod= getClass().getMethod(name, null);
+            runMethod = getClass().getMethod(name, null);
         } catch (NoSuchMethodException e) {
-            fail("Method \""+name+"\" not found");
+            fail("Method \"" + name + "\" not found");
         }
         if (!Modifier.isPublic(runMethod.getModifiers())) {
-            fail("Method \""+name+"\" should be public");
+            fail("Method \"" + name + "\" should be public");
         }
 
         try {
@@ -158,6 +157,24 @@ public abstract class JFuncTestCase extends VerboseAssert
      * This method is called after a test is executed.
      */
     protected void tearDown() throws Exception {
+    }
+
+    /**
+     * Sets up the fixture, for example, open a network connection.
+     * This method is called only once.  (Currently, this only works
+     * as intended when used with JFuncSuite's oneTest option turned
+     * on.)  
+     **/
+    protected void setUpOnce() throws Exception {
+    }
+
+    /**
+     * Tears down the fixture, for example, close a network connection.
+     * This method is only called once.  (Currently, this only works
+     * as intended when used with JFuncSuite's oneTest option turned
+     * on.)
+     */
+    protected void tearDownOnce() throws Exception {
     }
 
     /**

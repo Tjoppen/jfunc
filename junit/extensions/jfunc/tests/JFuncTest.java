@@ -1,6 +1,7 @@
 package junit.extensions.jfunc.tests;
 
 import junit.framework.*;
+import junit.extensions.*;
 import junit.extensions.jfunc.*;
 import junit.extensions.jfunc.samples.*;
 
@@ -142,7 +143,131 @@ public class JFuncTest extends TestCase {
         //junit.extensions.jfunc.textui.JFuncRunner.run(suite);
     }
 
+    public void testSetUp() throws Exception {
+        TestResult result = new TestResult();
+        InnerTest test = new InnerTest("testPassed");
+        test.run(result);
+        assert("setUp() wasn't called", test.calledSetUp == 1);
+        assert("tearDown() wasn't called", test.calledTearDown == 1);
+        
+    }
+
+    public void testProxySetUpOneTest() throws Exception {
+        TestResult result = new TestResult();
+        JFuncSuite suite = new JFuncSuite();
+        InnerTest thetest = new InnerTest();
+        suite.oneTest(true);
+        InnerTest test = (InnerTest) suite.getTestProxy(thetest);
+        test.testPassed();
+        suite.run(result);
+        assert("setUp() wasn't called", thetest.calledSetUp == 1);
+        assert("tearDown() wasn't called", thetest.calledTearDown == 1);
+    }
+
+    public void testProxySetUp() throws Exception {
+        TestResult result = new TestResult();
+        JFuncSuite suite = new JFuncSuite();
+        InnerTest thetest = new InnerTest();
+        //suite.oneTest(true);
+        InnerTest test = (InnerTest) suite.getTestProxy(thetest);
+        test.testPassed();
+        suite.run(result);
+        /**
+         * The actual test is a little difficult to get at, because
+         * it's wrapped by the test wrapper object and it's
+         * cloned/newInstance so you can't simply keep a reference to
+         * it as you would in testProxySetUpOneTest()
+         **/
+        thetest = (InnerTest) ((TestletWrapper)suite.testAt(0)).getTestInstance();
+        assert("setUp() wasn't called", thetest.calledSetUp == 1);
+        assert("tearDown() wasn't called", thetest.calledTearDown == 1);
+    }
+
+    public void testStandardSetUpOnce() throws Exception {
+        TestSuite suite = new TestSuite();
+        TestResult result = new TestResult();
+        InnerSetup setup = new InnerSetup(suite);
+        suite.addTest(new InnerTest("testPassed"));
+        setup.run(result);
+        assert("setup incorrect ", setup.calledSetUp == 1);
+        assert("teardown incorrect ", setup.calledTearDown == 1);
+    }
+
+    public void testSetUpOnce() throws Exception {
+        JFuncSuite suite = new JFuncSuite();
+        TestResult result = new TestResult();
+        InnerTest tests[] = new InnerTest[] { new InnerTest(), new InnerTest() };
+        suite.oneTest(true);
+        InnerTest proxy = (InnerTest) suite.getTestProxy(tests[0]);
+        InnerTest proxy2 = (InnerTest) suite.getTestProxy(tests[1]);
+        //suite.addTest(test);
+        proxy.testPassed();
+        proxy.testFailed();
+        proxy2.testPassed();
+        proxy2.testFailed();
+        suite.run(result);
+        for (int i = 0; i < tests.length; i++) {
+            InnerTest test = tests[i];
+            assert("setup incorrect ", test.calledSetUp == 2);
+            assert("teardown incorrect ", test.calledTearDown == 2);
+            assert("setup once incorrect ", test.calledSetUpOnce == 1);
+            assert("teardown once incorrect ", test.calledTearDownOnce == 1);
+        }
+    }
+
+    public void testProxyOneTestSetUpOnce() throws Exception {
+        TestResult result = new TestResult();
+        JFuncSuite suite = new JFuncSuite();
+        InnerTest thetest = new InnerTest();
+        //suite.oneTest(true);
+        InnerTest test = (InnerTest) suite.getTestProxy(thetest);
+        test.testPassed();
+        test.testFailed();
+        suite.run(result);
+        /**
+         * The actual test is a little difficult to get at, because
+         * it's wrapped by the test wrapper object and it's
+         * cloned/newInstance so you can't simply keep a reference to
+         * it as you would in testProxySetUpOneTest()
+         **/
+        thetest = (InnerTest) ((TestletWrapper)suite.testAt(0)).getTestInstance();
+        InnerTest othertest = (InnerTest) 
+            ((TestletWrapper)suite.testAt(1)).getTestInstance();
+        assert(thetest != othertest);
+        assert("setup incorrect", thetest.calledSetUp == 1);
+        assert("teardown incorrect", thetest.calledTearDown == 1);
+        assert("setup once incorrect ", thetest.calledSetUpOnce == 1);
+        assert("teardown once incorrect ", thetest.calledTearDownOnce == 1);
+        assert("setup incorrect", othertest.calledSetUp == 1);
+        assert("teardown incorrect", othertest.calledTearDown == 1);
+        assert("setup once incorrect ", othertest.calledSetUpOnce == 1);
+        assert("teardown once incorrect ", othertest.calledTearDownOnce == 1);
+    }
+
+
+
+    public static class InnerSetup extends TestSetup {
+        public int calledSetUp;
+        public int calledTearDown;
+
+        public InnerSetup(Test test) {
+            super(test);
+        }
+
+        protected void setUp() {                
+            calledSetUp++;
+        }
+        protected void tearDown() {
+            calledTearDown++;
+        }
+    }
+                    
+
     public static class InnerTest extends JFuncTestCase {
+        public int calledSetUp;
+        public int calledTearDown;
+        public int calledSetUpOnce;
+        public int calledTearDownOnce;
 
         public InnerTest() {
             //this(false);
@@ -150,6 +275,26 @@ public class JFuncTest extends TestCase {
 
         public InnerTest(boolean fatal) {
             //setFatal(fatal);
+        }
+
+        public InnerTest(String test) {
+            super(test);
+        }
+
+        protected void setUp() {
+            calledSetUp++;
+        }
+
+        protected void tearDown() {
+            calledTearDown++;
+        }
+
+        protected void setUpOnce() {
+            calledSetUpOnce++;
+        }
+
+        protected void tearDownOnce() {
+            calledTearDownOnce++;
         }
 
         public void testPassed() {

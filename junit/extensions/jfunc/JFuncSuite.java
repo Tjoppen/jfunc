@@ -13,6 +13,10 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
 
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Enumeration;
 /**
  * <p>The JFuncSuite uses dynamic proxies for classes to make
  * suite construction in JUnit easier and emplore more compile time
@@ -121,7 +125,58 @@ public class JFuncSuite extends TestSuite {
               throw new RuntimeException(e.toString());
           }
     }
-    
+
+    /**
+     * Runs the tests and collects their result in a TestResult.
+     */
+    public void run(TestResult result) {
+        setUpOnce(result);
+        super.run(result);
+        tearDownOnce(result);
+    }
+
+    private Set getTests() {
+        Set tests = new HashSet();
+        for (Enumeration e= tests(); e.hasMoreElements(); ) {
+            Test test = (Test)e.nextElement();
+            if (test instanceof TestletWrapper) {
+                test = ((TestletWrapper)test).getTestInstance();
+            }
+            tests.add(test);
+        }
+        return tests;
+    }
+
+    /**
+     * This doesn't really work the way I want it to just yet.  It
+     * only works the way I intended it too when you're using
+     * <code>suite.oneTest(true)</code>
+     **/
+    protected void setUpOnce(TestResult result) {
+        for(Iterator i = getTests().iterator(); i.hasNext();) {
+            Test test = (Test) i.next();
+            if (test instanceof JFuncTestCase) {
+                try {
+                    ((JFuncTestCase)test).setUpOnce();
+                } catch (Exception e) {
+                    result.addError(test, e);
+                }
+            }
+        }
+    }
+
+    protected void tearDownOnce(TestResult result) {
+        for(Iterator i = getTests().iterator(); i.hasNext();) {
+            Test test = (Test) i.next();
+            if (test instanceof JFuncTestCase) {
+                try {
+                    ((JFuncTestCase)test).tearDownOnce();
+                } catch (Exception e) {
+                    result.addError(test, e);
+                }
+            }
+        }
+    }
 
     /**
      * A proxy that looks like the test object.

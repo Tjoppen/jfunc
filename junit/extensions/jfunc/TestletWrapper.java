@@ -17,6 +17,8 @@ public class TestletWrapper implements Test {
     final Test instance;
     final Method method;
     final Object[] args;
+    private final boolean isJFuncTestCase;
+    private final boolean isTestCase;
 
     TestletWrapper(Test instance, Method method) {
         this(instance, method, null);
@@ -30,6 +32,8 @@ public class TestletWrapper implements Test {
         this.instance = instance;
         this.method = method;
         this.args = args;
+        isJFuncTestCase = this.instance instanceof JFuncTestCase;
+        isTestCase = this.instance instanceof TestCase;
     }
 
     public String name() {
@@ -39,22 +43,57 @@ public class TestletWrapper implements Test {
     public int countTestCases() {
         return 1;
     }
+    
+    protected void setUp(TestResult result) {
+        try {
+            if (isJFuncTestCase) {
+                ((JFuncTestCase)instance).setUp();
+            } else if (isTestCase) {
+                junit.framework.Assert.fail("can't call testCase");
+                //((TestCase)instance).setUp();
+            }
+        } catch (Exception e) {
+            // mark as a setup failure
+            result.addError(instance, e);
+            //junit.framework.Assert.fail("setUp() exceptions");
+        }
+    }
+
+    protected void tearDown(TestResult result) {
+        try {
+            if (isJFuncTestCase) {
+                ((JFuncTestCase)instance).tearDown();
+            } else if (isTestCase) {
+                junit.framework.Assert.fail("can't call testCase");
+                //((TestCase)instance).tearDown();
+            }
+        } catch (Exception e) {
+            result.addError(instance, e);
+            // mark as a setup failure
+            //junit.framework.Assert.fail("tearDown() exceptions");
+        }
+    }
         
     public void run(final TestResult result) {
-        result.startTest(this);
+        boolean isJFuncTestCase = instance instanceof JFuncTestCase;
         if (instance instanceof JFuncAssert) {
-            // XXX this isn't cool especially if we're running in a multi-threaded
-            // environment.  Need to resolve it somehow.
+            // XXX this isn't cool especially if we're running in a
+            // multi-threaded environment.  Need to resolve it
+            // somehow.
+
+            // XXX might as well make our Assert class static, huh?
             ((JFuncAssert)instance).setResult(result);
             ((JFuncAssert)instance).setTest(this);
         }
+        setUp(result);
+        result.startTest(this);
         Protectable p = new Protectable() {
                 public void protect() throws Throwable {
                     runBare(result);
                 }
             };
         result.runProtected(this, p);
-            
+        tearDown(result);
         result.endTest(this);
     }
         
@@ -66,6 +105,10 @@ public class TestletWrapper implements Test {
             e.fillInStackTrace();
             throw e.getTargetException();
         }
+    }
+
+    public Test getTestInstance() {
+        return instance;
     }
 
     public String toString() {
