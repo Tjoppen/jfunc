@@ -45,20 +45,19 @@ public class JFuncTest extends TestCase {
                result.failureCount() == 3);
     }
 
-    public void testRunningNoMultipleFailures() throws Exception {
+    public void testReturnValues() throws Exception {
         JFuncResult result = new JFuncResult();
-        SimpleTest test = new SimpleTest("testMultipleFailures", true);
+        SimpleTest test = new SimpleTest();
         test = (SimpleTest) result.getTestProxy(test);
         // XXX this won't work
         // test.run(result);
-        test.testMultipleFailures();
-//          for(java.util.Enumeration e = result.failures(); e.hasMoreElements();) {
-//              Object o = e.nextElement();
-//              System.err.println(o.toString());
-//          }
-        assert("should have only had one failure", result.failureCount() == 1);
+        assert ("didn't return expect result", 
+                test.testInstantResult(true) == JFuncResult.PASSED);
+        assert ("didn't return expect result", 
+                test.testInstantResult(false) == JFuncResult.FAILED);
+        assert ("didn't return expect result", 
+                test.testInstantError() == JFuncResult.ERRORED);
     }
-
 
     public void testNoMemberSharing() throws Exception {
         JFuncSuite suite = new JFuncSuite();

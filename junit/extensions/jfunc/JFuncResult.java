@@ -28,10 +28,10 @@ import java.lang.reflect.InvocationHandler;
  **/
 public class JFuncResult extends TestResult implements AssertListener {
 
-    public static final int UNDEF = -1;
-    public static final int PASSED = 0;
-    public static final int FAILURE = 1;
-    public static final int ERROR = 2;
+    public static final int UNDEF   = -1;
+    public static final int PASSED  = 0;
+    public static final int FAILED  = 1;
+    public static final int ERRORED = 2;
 
     public JFuncResult() {
         super();
@@ -117,9 +117,9 @@ public class JFuncResult extends TestResult implements AssertListener {
 
         public int status() {
             if (gotError) {
-                return ERROR;
+                return ERRORED;
             } else if (gotFailure) {
-                return FAILURE;
+                return FAILED;
             } else {
                 return PASSED;
             }
