@@ -2,7 +2,7 @@
 <project name="jfunc" default="build" basedir=".">
         <target name="init">
                 <tstamp/>
-                <property name="version" value="1.1" />
+                <property name="version" value="1.2" />
                 <property name="dist"  value="jfunc${version}" />
                 <property name="versionfile"  value="junit/extensions/jfunc/runner/Version.java" />
                 <property name="zipfile"  value="${dist}.zip" />
@@ -112,6 +112,7 @@
 
         <target name="test" depends="build">
                         <java classname="junit.textui.TestRunner" fork="yes">
+                        <!--jvmarg value="-noverify" /-->
                         <arg value="junit.extensions.jfunc.tests.AllTests" />
                         <classpath>
                                 <pathelement location="build" />
@@ -125,9 +126,9 @@
         <target name="zip">
                 <!-- !!! hard code names, variable substitution doesn't work !!! -->
                 <zip 
-                        zipfile="jfunc3.6.zip"
+                        zipfile="jfunc1.2.zip"
                         basedir="."
-                        includes="jfunc3.6/**"
+                        includes="jfunc1.2/**"
                 />
         </target>
         

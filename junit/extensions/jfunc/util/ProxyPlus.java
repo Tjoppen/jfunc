@@ -95,7 +95,7 @@ import java.util.*;
  *<!-- if there is anyone I'm neglecting to mention for credit here, contact me-->
  * @author Shane Celis 
  *  <a href="mailto:shane@terraspring.com">shane@terraspring.com</a>
- * @version $Id: ProxyPlus.java,v 1.3 2002/06/29 05:15:59 semios Exp $
+ * @version $Id: ProxyPlus.java,v 1.4 2002/07/01 20:33:12 semios Exp $
  **/
 public class ProxyPlus extends Proxy {
     static final String INVOCATION_CLASS = InvocationHandler.class.getName();
@@ -121,6 +121,11 @@ public class ProxyPlus extends Proxy {
     static final String CLASS_SUFIX = "$ProxyPlus";
     // XXX should I keep this?
     static final String CLASS_PREFIX = "org.apache.";
+    /**
+     * Call the super() constructor (this can be turned off if the
+     * -noverify option is given to the JVM)
+     **/
+    static boolean callSuper = true;
     static int index = 0;
 
     /** 
@@ -143,16 +148,15 @@ public class ProxyPlus extends Proxy {
     private static int addInvokeRef(ConstantPoolGen cp) {
         // http://jakarta.apache.org/bcel/manual.html
         // should use the Type.getMethodSignature() here
-        Object[] obj = new Object[0];
         return cp.addInterfaceMethodref(INVOCATION_CLASS,
                "invoke",
-               // Object proxy; method; Object[] args
+               // proxy, method, args[]
         // this "better" way doesn't seem to work                                       
 //                 Type.getMethodSignature(Type.OBJECT,
 //                                         new Type[] {
 //                                         Type.OBJECT,
 //                                         new ObjectType(java.lang.reflect.Method.class.getName()),
-//                                         new ObjectType(obj.getClass().getName())}));
+//                                         new ObjectType(new Object[0].getClass().getName())}));
                                         
      "(Ljava/lang/Object;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;");
       }
@@ -220,6 +224,16 @@ public class ProxyPlus extends Proxy {
         }
         if (cls == null || interfaces == null)
             throw new NullPointerException();
+        
+        if (callSuper) {
+            // check to ensure that there is a default constructor
+            try {
+                superclass.getDeclaredConstructor(new Class[0]);
+            } catch (NoSuchMethodException nsme) {
+                throw new IllegalArgumentException(superclass.getName() +
+                                                   " has no default constructor");
+            }
+        }
         
         StringBuffer keyBuff = new StringBuffer(cls.getName() + ";");
         if(interfaces != null){
@@ -303,10 +317,10 @@ public class ProxyPlus extends Proxy {
 
     }
 
-    public synchronized static Object newProxyInstance(ClassLoader loader,
-                                                       Class interfaces[],
-                                                       Class superclass,
-                                                       InvocationHandler ih)
+    public static Object newProxyInstance(ClassLoader loader,
+                                          Class interfaces[],
+                                          Class superclass,
+                                          InvocationHandler ih)
         throws NoSuchMethodException, 
                IllegalAccessException, 
                InstantiationException, 
@@ -318,6 +332,9 @@ public class ProxyPlus extends Proxy {
                 Class.forName(InvocationHandler.class.getName(), 
                               true, 
                               loader)}).newInstance(new Object[] { ih });
+            /* These were the catches for the proxy code, but
+               since we're doing objects, they can't be considered
+               internal errors any longer */
         } catch (ClassNotFoundException e) {
             // this actually means something different than CNFE,
             // it means the loader can't see that interface
@@ -348,14 +365,21 @@ public class ProxyPlus extends Proxy {
                                              new Type[] { // argument types
             new ObjectType(INVOCATION_CLASS)}, null, CONSTRUCTOR_NAME, 
             cg.getClassName(), il, cp);
-                        
-        il.append(new ALOAD(0));
-        il.append(factory.createInvoke(//"java.lang.Object",
-                                       parentClass,
-                                       CONSTRUCTOR_NAME,
-                                       Type.VOID,
-                                       new Type[] {},
-                                       c.INVOKESPECIAL));
+        
+        if (callSuper) {
+        // <super>
+        // this piece of code can actually be excluded... if your super class
+        // doesn't include a default constructor, this may be necessary.  
+        // Unfortunately it requires that verification be turned off (-noverify).
+            il.append(new ALOAD(0));
+            il.append(factory.createInvoke(//"java.lang.Object",
+                                           parentClass,
+                                           CONSTRUCTOR_NAME,
+                                           Type.VOID,
+                                           new Type[] {},
+                                           c.INVOKESPECIAL));
+        // </super>
+        }
         il.append(new ALOAD(0));
         il.append(new ALOAD(1));
         il.append(factory.createFieldAccess(
@@ -767,7 +791,8 @@ public class ProxyPlus extends Proxy {
                 return Type.BOOLEAN;
             }
         } else if (cls.isArray()) {
-            return new ArrayType( toType(cls.getComponentType()),cls.getName().lastIndexOf('[') + 1);
+            return new ArrayType( toType(cls.getComponentType()),
+                                  cls.getName().lastIndexOf('[') + 1);
         } else
             return new ObjectType(cls.getName());
         throw new java.lang.InternalError(cls.getName());
@@ -855,7 +880,8 @@ public class ProxyPlus extends Proxy {
         
         // INVOKE Handler
         il.append(new ALOAD(0)); //this
-        il.append(factory.createGetStatic(cg.getClassName(), fieldName, METHOD_OBJECT));
+        il.append(factory.createGetStatic(cg.getClassName(), fieldName, 
+                                          METHOD_OBJECT));
         il.append(new ALOAD(argArray));
         il.append(new INVOKEINTERFACE(after, 4 ));
         

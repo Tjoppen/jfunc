@@ -13,13 +13,16 @@ public class ProxyTests extends TestCase {
     }
 
     public void testUnproxiable() throws Exception {
-        Method method = Object.class.getMethod("toString",
-                                               new Class[] {});
-        Object object = (Object)ProxyPlus.newProxyInstance(
-                                                 new Class[]{},
-                                                 Unproxiable.class,
-                                                 new Handler(method));
-        object.toString();
+        try {
+            Method method = Object.class.getMethod("toString",
+                                                   new Class[] {});
+            Object object = (Object)ProxyPlus.newProxyInstance(new Class[] {},
+                                                             Unproxiable.class,
+                                                             new Handler(method));
+            object.toString();
+            fail();
+        } catch (Exception e) {
+        }
     }
 
     public void testObjectProxy() throws Exception {
@@ -39,7 +42,7 @@ public class ProxyTests extends TestCase {
                                                    Object.class
                                                });
         Vector object = (Vector)ProxyPlus.newProxyInstance(
-                                                 new Class[]{},
+                                                 new Class[] {},
                                                  Vector.class,
                                                  new Handler(method, 
                                                              new Object[] {
@@ -63,10 +66,12 @@ public class ProxyTests extends TestCase {
                    !ProxyPlus.isProxyClass(proxy));
     }
 
+    // proxies must have default constructor, unless you do a -noverify
     class Unproxiable {
         private Unproxiable() { }
     }
     
+    // static asserts are pretty cool
     class Handler extends Assert implements InvocationHandler {
         public Method expectedMethod;
         public Object[] expectedArgs;
@@ -82,12 +87,13 @@ public class ProxyTests extends TestCase {
 
         public Handler() { }
 
-        public Object invoke( Object obj,
-                              Method method,
-                              Object args[])
+        public Object invoke(Object obj,
+                             Method method,
+                             Object args[])
             throws java.lang.Throwable{
             // you can get yourself into trouble here... 
             // calling obj.toString() will cause a bus error or stack overflow
+            // (it's recursive after all)
             assertNotNull(obj);
             assertNotNull(method);
             assertNotNull(args);

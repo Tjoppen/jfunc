@@ -1,7 +1,5 @@
 package junit.extensions.jfunc;
 
-import com.develop.delegator.ProxyLoader;
-
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
