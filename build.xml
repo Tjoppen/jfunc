@@ -34,9 +34,29 @@
         </target>
         <target name="clean">
                 <delete dir="build" />
+                <delete dir="javadoc" />
+        </target>
+        <target name="javadoc">
+                <delete dir="javadoc" />
+                <mkdir dir="javadoc" />
+                <javadoc 
+                        sourcepath="."
+                        packagenames="junit.extensions.jfunc.*, junit.extensions.jfunc.util.*"
+                        destdir="javadoc"
+                        author="false"
+                        version="false"
+                        use="false"
+                        windowtitle="JFunc API">
+                        <classpath>
+                                <pathelement location="build" />
+                                <pathelement location="lib/junit.jar" />
+                                <pathelement location="lib/jcfe.jar" />
+                                <pathelement location="lib/bcel.jar" />
+                        </classpath>
+                </javadoc>
         </target>
 
-        <target name="dist" depends="build">
+        <target name="dist" depends="build,javadoc">
                 <delete dir="${dist}" />
                 <mkdir dir="${dist}" />
                 <mkdir dir="${dist}/lib" />
@@ -68,22 +88,9 @@
                         basedir="."
                         includes="jfunc/tests/LoadedFromJar.class"
                 /-->
-                <mkdir dir="${dist}/javadoc" />
-                <javadoc 
-                        sourcepath="."
-                        packagenames="junit.extensions.jfunc.*, junit.extensions.jfunc.util.*"
-                        destdir="${dist}/javadoc"
-                        author="false"
-                        version="false"
-                        use="false"
-                        windowtitle="JFunc API">
-                        <classpath>
-                                <pathelement location="${dist}/lib/jfunc.jar" />
-                                <pathelement location="${dist}/lib/junit.jar" />
-                                <pathelement location="${dist}/lib/jcfe.jar" />
-                                <pathelement location="${dist}/lib/bcel.jar" />
-                        </classpath>
-                </javadoc>
+                <copy todir="${dist}/javadoc">
+                        <fileset dir="javadoc"/>
+                </copy>               
                 <!--copy todir="${dist}/doc">
                         <fileset dir="doc"/>
                 </copy-->               
