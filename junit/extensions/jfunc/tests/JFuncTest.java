@@ -149,9 +149,27 @@ public class JFuncTest extends TestCase {
         test.run(result);
         assert("setUp() wasn't called", test.calledSetUp == 1);
         assert("tearDown() wasn't called", test.calledTearDown == 1);
+    }
+
+    /**
+     * Tests setUp() and tearDown() are called on JUnit's TestCase correctly.
+     **/
+    public void testStandardSetUp() throws Exception {
+        TestResult result = new TestResult();
+        JFuncSuite suite = new JFuncSuite();
+        StandardInnerTest test = new StandardInnerTest("");
+        suite.oneTest(true);
+        StandardInnerTest proxy = (StandardInnerTest) suite.getTestProxy(test);
+        proxy.testPassed();
+        suite.run(result);
+        assert("setUp() wasn't called", test.calledSetUp == 1);
+        assert("tearDown() wasn't called", test.calledTearDown == 1);
         
     }
 
+    /**
+     * Tests setup is called on Tests using TestletWrapper
+     **/
     public void testProxySetUpOneTest() throws Exception {
         TestResult result = new TestResult();
         JFuncSuite suite = new JFuncSuite();
@@ -306,6 +324,47 @@ public class JFuncTest extends TestCase {
         }
 
     }
+
+    public static class StandardInnerTest extends TestCase {
+        public int calledSetUp;
+        public int calledTearDown;
+        public int calledSetUpOnce;
+        public int calledTearDownOnce;
+
+        public StandardInnerTest() {
+            super("*blah*");
+        }
+
+        public StandardInnerTest(String test) {
+            super(test);
+        }
+
+        protected void setUp() {
+            calledSetUp++;
+        }
+
+        protected void tearDown() {
+            calledTearDown++;
+        }
+
+        protected void setUpOnce() {
+            calledSetUpOnce++;
+        }
+
+        protected void tearDownOnce() {
+            calledTearDownOnce++;
+        }
+
+        public void testPassed() {
+            assert(true);
+        }
+
+        public void testFailed() {
+            assert(false);
+        }
+
+    }
+
 
     class Listener implements AssertListener {
         boolean gotAssert = false;

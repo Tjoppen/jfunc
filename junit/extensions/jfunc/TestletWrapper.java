@@ -43,16 +43,29 @@ public class TestletWrapper implements Test {
     public int countTestCases() {
         return 1;
     }
+
+    private void badMagic(TestCase test, String methodName) throws Exception {
+        try {
+            Class cl = TestCase.class;
+            Method m = cl.getDeclaredMethod(methodName, new Class[] {});
+            m.setAccessible(true); // #define private public
+            m.invoke(test, new Object[] {});
+        } catch (InvocationTargetException ite) {
+            throw (Exception) ite.getTargetException();
+        }
+    }
     
     protected void setUp(TestResult result) {
         try {
             if (isJFuncTestCase) {
                 ((JFuncTestCase)instance).setUp();
             } else if (isTestCase) {
-                junit.framework.Assert.fail("can't call testCase");
+                badMagic((TestCase)instance, "setUp");
+                //junit.framework.Assert.fail("can't call testCase");
                 //((TestCase)instance).setUp();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             // mark as a setup failure
             result.addError(instance, e);
             //junit.framework.Assert.fail("setUp() exceptions");
@@ -64,7 +77,8 @@ public class TestletWrapper implements Test {
             if (isJFuncTestCase) {
                 ((JFuncTestCase)instance).tearDown();
             } else if (isTestCase) {
-                junit.framework.Assert.fail("can't call testCase");
+                badMagic((TestCase)instance, "tearDown");
+                //junit.framework.Assert.fail("can't call testCase");
                 //((TestCase)instance).tearDown();
             }
         } catch (Exception e) {
