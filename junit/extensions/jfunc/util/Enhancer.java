@@ -95,7 +95,7 @@ import org.apache.bcel.generic.*;
  * </pre>
  *@author     Juozas Baliuka <a href="mailto:baliuka@mwm.lt">
  *      baliuka@mwm.lt</a>
- *@version    $Id: Enhancer.java,v 1.3 2002/06/28 00:01:35 semios Exp $
+ *@version    $Id: Enhancer.java,v 1.4 2002/06/28 00:12:09 semios Exp $
  */
 public class Enhancer implements org.apache.bcel.Constants {
     
@@ -136,7 +136,7 @@ public class Enhancer implements org.apache.bcel.Constants {
         return cp.addMethodref(
          name,
         "<init>",
-        "(L"+ INTERCEPTOR_CLASS.replace('.','/') +";)V");
+        "(L"+ INVOCATION_CLASS.replace('.','/') +";)V");
     }
     
     
@@ -174,13 +174,13 @@ public class Enhancer implements org.apache.bcel.Constants {
     /** Creates a new instance of Enhancer */
     
     protected Enhancer() {}
-    public static void setMethodInterceptor(Object enhanced, MethodInterceptor ih)
+    public static void setInvocationHandler(Object enhanced, InvocationHandler ih)
     throws Throwable {
         enhanced.getClass().getField(FIELD_NAME).set(enhanced, ih);
     }
-    public static MethodInterceptor getMethodInterceptor(Object enhanced){
+    public static InvocationHandler getInvocationHandler(Object enhanced){
       try{      
-        return (MethodInterceptor) enhanced.getClass().getField(FIELD_NAME).get(
+        return (InvocationHandler) enhanced.getClass().getField(FIELD_NAME).get(
             enhanced);
       }catch( NoSuchFieldException nsfe){
         throw new NoSuchFieldError( enhanced.getClass().getName() + ":" + nsfe.getMessage());
@@ -194,7 +194,7 @@ public class Enhancer implements org.apache.bcel.Constants {
     public static Object enhance(
     Class cls,
     Class interfaces[],
-    MethodInterceptor ih)
+    InvocationHandler ih)
     throws Throwable {
         return enhance(
         cls,
@@ -206,7 +206,7 @@ public class Enhancer implements org.apache.bcel.Constants {
     Class cls,
    /* String class_name, */ //it was not good idea
     Class interfaces[],
-    MethodInterceptor ih,
+    InvocationHandler ih,
     ClassLoader loader)
     throws Throwable {
         if (cls == null) {
@@ -260,21 +260,20 @@ public class Enhancer implements org.apache.bcel.Constants {
             map.put(key, result);
         }
         
-       Factory factory =  (Factory)factories.get(result);
-        if( factory == null ){
-          factory = (Factory)result.getConstructor(
-                     new Class[] {
-                         Class.forName(MethodInterceptor.class.getName(), true, loader)
-                       }).newInstance(new Object[] { null });
-          factories.put(result,factory);             
+//         Factory factory =  (Factory)factories.get(result);
+//          if( factory == null ){
+//            factory = (Factory)result.getConstructor(
+//                       new Class[] {
+//                           Class.forName(InvocationHandler.class.getName(), true, loader)
+//                         }).newInstance(new Object[] { null });
+//            factories.put(result,factory);             
    
-        }
-        return factory.newInstance(ih);
-        /*result
-        .getConstructor(
-        new Class[] { Class.forName(MethodInterceptor.class.getName(), true, loader)})
-        .newInstance(new Object[] { ih });
-                */
+//          }
+//          return factory.newInstance(ih);
+        return result.getConstructor(
+             new Class[] { Class.forName(InvocationHandler.class.getName(), 
+                            true, 
+                           loader)}).newInstance(new Object[] { ih });
     }
     private static void addConstructors(ClassGen cg, Class superClass)
     throws Throwable {
@@ -287,7 +286,7 @@ public class Enhancer implements org.apache.bcel.Constants {
             Class parmTypes[] = constructors[i].getParameterTypes();
             if (parmTypes.length == 1
             && parmTypes[0].equals(
-            MethodInterceptor.class)) {
+            InvocationHandler.class)) {
                 continue;
             }
             InstructionList il = new InstructionList();
@@ -301,7 +300,7 @@ public class Enhancer implements org.apache.bcel.Constants {
             factory.createFieldAccess(
             cg.getClassName(),
             FIELD_NAME,
-            new ObjectType(INTERCEPTOR_CLASS),
+            new ObjectType(INVOCATION_CLASS),
             GETFIELD));
             il.append(new ALOAD(0));
             il.append(new ALOAD(argArray));
@@ -321,7 +320,7 @@ public class Enhancer implements org.apache.bcel.Constants {
         MethodGen costructor = new MethodGen(ACC_PUBLIC, // access flags
         Type.VOID, // return type
         new Type[] { // argument types
-            new ObjectType(INTERCEPTOR_CLASS)}, null, // arg names
+            new ObjectType(INVOCATION_CLASS)}, null, // arg names
             CONSTRUCTOR_NAME, cg.getClassName(), il, cp);
             
             
@@ -339,26 +338,26 @@ public class Enhancer implements org.apache.bcel.Constants {
             factory.createFieldAccess(
             cg.getClassName(),
             FIELD_NAME,
-            new ObjectType(INTERCEPTOR_CLASS),
+            new ObjectType(INVOCATION_CLASS),
             PUTFIELD));
             il.append(new RETURN());
             cg.addMethod(getMethod(costructor));
        
             
-          il = new InstructionList();  
-          MethodGen newInstance = toMethodGen( 
-                        Factory.class.getMethod("newInstance",
-                                new Class[]{ MethodInterceptor.class } ),
-                        cg.getClassName(),
-                        il,
-                        cp
-                      );
-          il.append( new NEW(cp.addClass( new ObjectType(cg.getClassName()) )) );
-          il.append( new DUP());
-          il.append( new ALOAD(1) );  
-          il.append( new INVOKESPECIAL( addNewInstanceRef(cp, cg.getClassName()) ) ) ;
-          il.append( new ARETURN());   
-          cg.addMethod(getMethod(newInstance));
+//            il = new InstructionList();  
+//            MethodGen newInstance = toMethodGen( 
+//                          Factory.class.getMethod("newInstance",
+//                                  new Class[]{ InvocationHandler.class } ),
+//                          cg.getClassName(),
+//                          il,
+//                          cp
+//                        );
+//            il.append( new NEW(cp.addClass( new ObjectType(cg.getClassName()) )) );
+//            il.append( new DUP());
+//            il.append( new ALOAD(1) );  
+//            il.append( new INVOKESPECIAL( addNewInstanceRef(cp, cg.getClassName()) ) ) ;
+//            il.append( new ARETURN());   
+//            cg.addMethod(getMethod(newInstance));
           
     }
     
@@ -366,7 +365,7 @@ public class Enhancer implements org.apache.bcel.Constants {
     private static void addHandlerField(ClassGen cg) {
         ConstantPoolGen cp = cg.getConstantPool();
         FieldGen fg =
-        new FieldGen(ACC_PUBLIC, new ObjectType(INTERCEPTOR_CLASS), FIELD_NAME, cp);
+        new FieldGen(ACC_PUBLIC, new ObjectType(INVOCATION_CLASS), FIELD_NAME, cp);
         cg.addField(fg.getField());
     }
     
@@ -422,6 +421,8 @@ public class Enhancer implements org.apache.bcel.Constants {
         }
         int cntr = 0;
         for (java.util.Iterator i = methodSet.iterator(); i.hasNext();) {
+            // XXX need to get rid of these, they should be simply embeded 
+            // in the generated code
             java.lang.reflect.Method method = ((MethodWrapper) i.next()).method;
             String fieldName = "METHOD_" + (cntr++);
             cg.addMethod(generateMethod(method, fieldName, cg,  after, invokeSuper));
@@ -842,16 +843,16 @@ public class Enhancer implements org.apache.bcel.Constants {
         Type types[] = mg.getArgumentTypes();
         int argCount = types.length;
         addMethodField(fieldName, cg);
-        boolean returnsValue = !mg.getReturnType().equals(Type.VOID);
-        boolean abstractM =  true; //Modifier.isAbstract(method.getModifiers());
+//          boolean returnsValue = !mg.getReturnType().equals(Type.VOID);
+//          boolean abstractM =  true; //Modifier.isAbstract(method.getModifiers());
         
-        InstructionHandle ehEnd = null;
-        GOTO gotoHandled = null;
-        IFEQ ifInvoke = null;
-        InstructionHandle condition = null;
-        InstructionHandle ehHandled = null;
-        InstructionHandle ehStart = null;
-        InstructionHandle start = il.getStart();
+//          InstructionHandle ehEnd = null;
+//          GOTO gotoHandled = null;
+//          IFEQ ifInvoke = null;
+//          InstructionHandle condition = null;
+//          InstructionHandle ehHandled = null;
+//          InstructionHandle ehStart = null;
+//          InstructionHandle start = il.getStart();
         
         //GENERATE ARG ARRAY
         int loaded = createArgArray(il, factory, cp, mg.getArgumentTypes());
@@ -917,7 +918,7 @@ public class Enhancer implements org.apache.bcel.Constants {
 //              ehHandled = il.append(new ASTORE(error));
 //          }
         
-          InstructionHandle endif = il.append(new ALOAD(0)); //this.handler
+        il.append(new ALOAD(0)); //this.handler
     
 //          if (!abstractM) {
             
@@ -930,7 +931,7 @@ public class Enhancer implements org.apache.bcel.Constants {
         factory.createFieldAccess(
         cg.getClassName(),
         FIELD_NAME,
-        new ObjectType(INTERCEPTOR_CLASS),
+        new ObjectType(INVOCATION_CLASS),
         //new ObjectType(INVOCATION_CLASS),
         GETFIELD));
         
