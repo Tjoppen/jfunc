@@ -60,9 +60,9 @@ public abstract class BaseTestRunner {
         } catch(Exception e) {
             // try to extract a test suite automatically
             clearStatus();                  
-            if (args.length == 0 && suiteMethodWithArgs != null) {
-                runFailed("suite needs arguments");
-            }
+//              if (args.length == 0 && suiteMethodWithArgs != null) {
+//                  runFailed("suite needs arguments");
+//              }
             if (suiteMethodWithArgs == null) 
                 return new TestSuite(testClass);
         }
@@ -71,7 +71,7 @@ public abstract class BaseTestRunner {
             runFailed("suite doesn't accept arguments");
         }
         try {
-            if (args.length != 0 && suiteMethodWithArgs != null) {
+            if (suiteMethodWithArgs != null) {
                 // use arguments with the suite
                 test= (Test)suiteMethodWithArgs.invoke(null, new Object[] { args }); 
             } else {

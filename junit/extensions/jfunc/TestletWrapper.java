@@ -48,7 +48,7 @@ public class TestletWrapper implements Test {
         try {
             Class cl = TestCase.class;
             Method m = cl.getDeclaredMethod(methodName, new Class[] {});
-            m.setAccessible(true); // #define private public
+            m.setAccessible(true); // #define private public  :)
             m.invoke(test, new Object[] {});
         } catch (InvocationTargetException ite) {
             throw (Exception) ite.getTargetException();

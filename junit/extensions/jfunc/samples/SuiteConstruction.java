@@ -5,7 +5,9 @@ import junit.extensions.jfunc.*;
 import junit.extensions.jfunc.runner.UsageException;
 
 /**
- * This sample illustrates the different means of constructing suites of tests.
+ * This sample illustrates the different means of constructing suites
+ * of tests.  They will all produce at least 1 failure, 1 error, and 4
+ * runs (with the exception of unsafe which will only produce 3).
  **/
 public class SuiteConstruction extends JFuncTestCase {
 
@@ -92,18 +94,19 @@ public class SuiteConstruction extends JFuncTestCase {
     }
 
     public static Test suite(String[] args) throws UsageException {
-        if (args[0].equals("typesafe")) {
-            return suiteTypeSafe();
-        } else if (args[0].equals("unsafe")) {
-            return suiteNotSafe();
-        } else if (args[0].equals("proxy")) {
-            return suiteUsingProxy();
-        } else if (args[0].equals("sharing")) {
-            return suiteSharing();
-        } else {
-            throw new UsageException("Invalid arguments given must be " +
-                                     "(typesafe|unsafe|proxy|sharing)");
+        if (args.length == 1) {
+            if (args[0].equals("typesafe")) {
+                return suiteTypeSafe();
+            } else if (args[0].equals("unsafe")) {
+                return suiteNotSafe();
+            } else if (args[0].equals("proxy")) {
+                return suiteUsingProxy();
+            } else if (args[0].equals("sharing")) {
+                return suiteSharing();
+            }
         }
+        throw new UsageException("Invalid arguments given must be " +
+                                 "(typesafe|unsafe|proxy|sharing)");
     }
 
 }

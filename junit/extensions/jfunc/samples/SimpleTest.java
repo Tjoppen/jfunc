@@ -63,22 +63,37 @@ public class SimpleTest extends JFuncTestCase {
         sharing = true;
     }
 
-    public static Test suite(String[] args) {
-        //System.err.println("using args suite generator");
-        return new SimpleTest(args[0]);
-    }
-
     public void testThrows() {
         throw new RuntimeException("exception message");
     }
 
+    public static Test suite(String[] args) {
+        if (args.length == 0) {
+            return suite();
+        }
+        //System.err.println("using args suite generator");
+        if (args[0].equals("testInstantResult")) {
+            JFuncSuite suite = new JFuncSuite();
+            SimpleTest test = new SimpleTest();
+            suite.oneTest(true);
+            test = (SimpleTest) suite.getTestProxy(test);
+            boolean pass = false;
+            if (args.length > 1 && args[1].equals("true")) {
+                pass = true;
+            }
+            test.testInstantResult(pass);
+            return suite;
+        }
+        return new SimpleTest(args[0]);
+
+    }
 
     public static Test suite() {
         //System.err.println("using arg-less suite constructor");
-        // more like type ugly :)
         /*
          * the type safe way
          *
+        // more like type ugly :)
          TestSuite suite= new TestSuite();
          suite.addTest(
          new SimpleTest("add") {
